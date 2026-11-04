@@ -112,6 +112,13 @@ export function renderHead(story) {
 <meta name="twitter:description" content="${esc(desc)}">`;
 }
 
+// metric grid columns that never leave an empty cell (desktop --n, phone --nm)
+function metricCols(n) {
+  const d = n <= 4 ? n : n % 3 === 0 ? 3 : n % 4 === 0 ? 4 : n % 2 === 0 ? 2 : 3;
+  const m = n === 4 ? 2 : n <= 3 ? n : n % 3 === 0 ? 3 : 2;
+  return `--n:${d};--nm:${m}`;
+}
+
 export function renderBody(story) {
   const p = story.person || {};
   const { chapters } = chapterIndex(story);
@@ -141,7 +148,7 @@ export function renderBody(story) {
     <h2 id="h-${esc(c.id)}">${esc(c.title)}</h2>
     <p class="kicker">${esc(c.kicker)}</p>
     <p class="narrative">${esc(c.narrative)}</p>
-    ${(c.metrics || []).length ? `<dl class="metrics">${c.metrics.map((m) => `<div><dd>${esc(m.value)}</dd><dt>${esc(m.label)}</dt></div>`).join('')}</dl>` : ''}
+    ${(c.metrics || []).length ? `<dl class="metrics" style="${metricCols(c.metrics.length)}">${c.metrics.map((m) => `<div><dd>${esc(m.value)}</dd><dt>${esc(m.label)}</dt></div>`).join('')}</dl>` : ''}
     ${(c.impact || []).length ? `<h3 class="sub">Impact</h3><ul class="impact">${c.impact.slice(0, 4).map((m) => `<li>${esc(m.claim)}</li>`).join('')}</ul>` : ''}
     ${(c.impact || []).length > 4 ? `<details class="more"><summary>${c.impact.length - 4} more shipped</summary><ul class="impact">${c.impact.slice(4).map((m) => `<li>${esc(m.claim)}</li>`).join('')}</ul></details>` : ''}
     ${(c.stack || []).length ? `<ul class="chips" aria-label="Stack">${c.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
@@ -191,13 +198,17 @@ export function renderBody(story) {
 <main id="story">
   <section class="step hero" data-kind="hero" aria-labelledby="name">
     <div class="hero-inner">
-      <p class="eyebrow"><span class="dot"></span>${esc(p.role)}${p.handle ? ` <span class="sep">/</span> <span class="handle">@${esc(p.handle)}</span>` : ''}</p>
-      <h1 id="name">${esc(p.name)}</h1>
-      <p class="hook">${esc(p.hook)}</p>
-      <p class="subhook">${esc(p.subhook)}</p>
-      ${headline ? `<ul class="headline">${headline}</ul>` : ''}
-      <div class="strip strip-static">${activitySvg(story, { height: 60 })}<div class="strip-ticks">${yearTicks(story)}</div></div>
-      <p class="cue"><span class="cue-line"></span><span>Scroll through time · every point of light is a commit</span></p>
+      <div class="hero-top">
+        <p class="eyebrow"><span class="dot"></span>${esc(p.role)}${p.handle ? ` <span class="sep">/</span> <span class="handle">@${esc(p.handle)}</span>` : ''}</p>
+        <h1 id="name">${esc(p.name)}</h1>
+        <p class="hook">${esc(p.hook)}</p>
+        <p class="cue"><span class="cue-line"></span><span>Scroll through time · every point of light is a commit</span></p>
+      </div>
+      <div class="hero-more">
+        <p class="subhook">${esc(p.subhook)}</p>
+        ${headline ? `<ul class="headline">${headline}</ul>` : ''}
+        <div class="strip strip-static">${activitySvg(story, { height: 60 })}<div class="strip-ticks">${yearTicks(story)}</div></div>
+      </div>
     </div>
   </section>
   ${impactHtml}

@@ -26,7 +26,14 @@ ul { list-style: none; }
 /* ---------- canvas layers ---------- */
 #gl { position: fixed; inset: 0; width: 100vw; height: 100lvh; display: block; z-index: 0; }
 .scrim { position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, rgba(4,5,10,.15) 0%, rgba(4,5,10,.45) 40%, rgba(4,5,10,.7) 75%, rgba(4,5,10,.85) 100%); }
+  background: linear-gradient(180deg, rgba(4,5,10,0) 0%, rgba(4,5,10,.12) 42%, rgba(4,5,10,.62) 72%, rgba(4,5,10,.8) 100%); }
+/* first paint, before WebGL boots: the galactic core already glows where the galaxy will ignite */
+.webgl body::before {
+  content: ""; position: fixed; z-index: 0; pointer-events: none; left: 50%; top: 27svh; width: 150vw; height: 80vw; transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, rgba(255,214,170,.5), rgba(160,120,255,.16) 35%, rgba(70,90,200,.06) 60%, transparent);
+  transition: opacity 1.4s ease-out;
+}
+.webgl.gl-on body::before { opacity: 0; }
 #labels { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
 .lbl {
   position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .35s; white-space: nowrap;
@@ -41,6 +48,11 @@ main { position: relative; z-index: 2; }
 .step { position: relative; }
 .hero { min-height: 100svh; display: flex; align-items: flex-end; padding: 72px var(--gut) 132px; }
 .hero-inner { max-width: 780px; width: 100%; }
+/* phones: the first screen is the galaxy + name + hook; the details follow one swipe down */
+.webgl .hero { display: block; padding: 0 var(--gut) 40px; }
+.webgl .hero-top { min-height: 100svh; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: calc(26px + env(safe-area-inset-bottom)); }
+.webgl .hero-more { padding-top: 34px; }
+.webgl .hero-top .cue { margin-top: 26px; }
 .eyebrow {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   font: 500 12px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
@@ -50,9 +62,10 @@ main { position: relative; z-index: 2; }
 .eyebrow .sep { color: var(--dim); }
 .eyebrow .handle { color: var(--fg); letter-spacing: .06em; text-transform: none; }
 h1 {
-  font-size: clamp(46px, 13vw, 120px); font-weight: 800; letter-spacing: -0.045em; line-height: .98;
-  margin-bottom: 14px; padding-bottom: .1em; 
-  background: linear-gradient(180deg, #fff 30%, #c9d3ea 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-size: clamp(50px, 15vw, 132px); font-weight: 800; letter-spacing: -0.05em; line-height: .9;
+  margin: 0 0 16px -.04em; padding-bottom: .1em;
+  /* starlight from the galaxy above falls on the name */
+  background: linear-gradient(176deg, #fff 0%, #fff 38%, #e3dcff 58%, #ffd2b0 78%, #b9a6ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .hook {
   font-size: clamp(22px, 5.6vw, 38px); font-weight: 650; letter-spacing: -0.02em; line-height: 1.15;
@@ -66,7 +79,7 @@ h1 {
   font-variant-numeric: tabular-nums; color: #fff;
 }
 .headline span { display: block; margin-top: 6px; font: 500 12px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-.cue { display: flex; align-items: center; gap: 12px; font: 500 12px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.cue { display: flex; text-wrap: balance; align-items: center; gap: 12px; font: 500 12px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .cue-line { width: 1px; height: 34px; background: linear-gradient(var(--accent), transparent); flex: none; animation: cue 2.2s ease-in-out infinite; transform-origin: top; }
 @keyframes cue { 0%, 100% { transform: scaleY(.3); opacity: .4; } 50% { transform: scaleY(1); opacity: 1; } }
 .strip { display: none; }
@@ -92,7 +105,7 @@ h1 {
 .panel h2 { font-size: clamp(30px, 8vw, 50px); font-weight: 780; letter-spacing: -0.035em; line-height: 1.02; margin-bottom: 10px;  }
 .kicker { color: var(--c); font-size: 17px; font-weight: 550; line-height: 1.35; margin-bottom: 14px; filter: brightness(1.15); }
 .narrative { color: #d2d8e6; font-size: 15px; line-height: 1.58; margin-bottom: 16px; }
-.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 1px; margin-bottom: 18px; border-radius: 12px; overflow: hidden; background: var(--line); border: 1px solid var(--line); }
+.metrics { display: grid; grid-template-columns: repeat(var(--nm, 2), minmax(0, 1fr)); gap: 1px; margin-bottom: 18px; border-radius: 12px; overflow: hidden; background: var(--line); border: 1px solid var(--line); }
 .metrics div { background: rgba(8,10,20,.95); padding: 12px 12px 10px; display: flex; flex-direction: column; justify-content: flex-start; min-width: 0; }
 .metrics dd { font-size: 26px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums; color: #fff; }
 .metrics dt { font: 500 12px/1.3 var(--mono); letter-spacing: .04em; overflow-wrap: anywhere; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
@@ -153,26 +166,28 @@ h1 {
 }
 .cbtn:hover { border-color: var(--c); }
 .cbtn.on { background: var(--c); color: #05060b; box-shadow: 0 0 14px -2px var(--c); }
-.scrub-range { position: absolute; top: -3px; bottom: 3px; left: 0; width: 0; border-radius: 3px; opacity: 0; pointer-events: none;
+.scrub-range { position: absolute; top: -3px; bottom: 3px; left: 0; width: 100%; transform-origin: 0 50%; transform: scaleX(0); border-radius: 3px; opacity: 0; pointer-events: none;
   background: color-mix(in srgb, var(--accent) 22%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent);
-  transition: left .5s, width .5s, opacity .4s; }
-.playhead { position: absolute; top: -3px; bottom: 3px; left: 0; width: 2px; margin-left: -1px; background: #fff; border-radius: 2px; box-shadow: 0 0 10px 1px rgba(255,255,255,.8); pointer-events: none; }
+  transition: transform .5s, opacity .4s; }
+.playhead { will-change: transform; position: absolute; top: -3px; bottom: 3px; left: 0; width: 2px; margin-left: -1px; background: #fff; border-radius: 2px; box-shadow: 0 0 10px 1px rgba(255,255,255,.8); pointer-events: none; }
 .playhead::after { content: ""; position: absolute; left: -3px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
 
 /* ---------- WebGL mode entrance ---------- */
-.webgl .hero-inner > * { animation: up 1s cubic-bezier(.2,.7,.2,1) both; }
-.webgl .hero-inner > :nth-child(1) { animation-delay: .15s; }
-.webgl .hero-inner > :nth-child(2) { animation-delay: .3s; }
+.webgl .hero-top > *, .webgl .hero-more > * { animation: up 1s cubic-bezier(.2,.7,.2,1) both; }
+.webgl .hero-top > :nth-child(1) { animation-delay: .15s; }
 /* name + hook paint immediately (they are the LCP); they only glide, never fade */
-.webgl .hero-inner > :nth-child(2), .webgl .hero-inner > :nth-child(3) { animation-name: glide; animation-delay: 0s; }
+.webgl .hero-top > :nth-child(2), .webgl .hero-top > :nth-child(3) { animation-name: glide; animation-delay: 0s; }
 @keyframes glide { from { transform: translateY(14px); } to { transform: none; } }
-.webgl .hero-inner > :nth-child(3) { animation-delay: .7s; }
-.webgl .hero-inner > :nth-child(4) { animation-delay: 1s; }
-.webgl .hero-inner > :nth-child(5) { animation-delay: 1.2s; }
-.webgl .hero-inner > :nth-child(n+6) { animation-delay: 2.4s; }
+.webgl .hero-top > :nth-child(4) { animation-delay: 1.6s; }
+.webgl .hero-more > * { animation-delay: .4s; }
 @keyframes up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 .webgl .pre { opacity: 0; transform: translateY(28px); }
 .webgl .scrubber { animation: up 1s 1.6s both; }
+/* phones: the timeline docks once the visitor starts moving through time */
+@media (max-width: 719px) {
+  .webgl .scrubber { animation: none; transition: transform .5s cubic-bezier(.2,.7,.2,1), opacity .4s; }
+  .webgl:not(.scrolled) .scrubber { transform: translateY(130%); opacity: 0; pointer-events: none; }
+}
 
 /* ---------- static / reduced-motion / no-WebGL fallback ---------- */
 .static #gl, .static .scrim, .static #labels, .static .scrubber { display: none; }
@@ -189,6 +204,9 @@ h1 {
   background-attachment: scroll;
 }
 .static .hero { min-height: auto; padding-top: 64px; padding-bottom: 40px; }
+.static .hero-top .cue { display: none; }
+.static .hero-top { margin-bottom: 16px; }
+.static body::before { display: none; }
 .static .strip { display: block; position: relative; margin: 6px 0 30px; padding-bottom: 14px; max-width: 760px; }
 .static .strip-svg { display: block; width: 100%; height: 60px; }
 .static .strip-ticks .tick { bottom: 0; }
@@ -210,6 +228,7 @@ h1 {
   :root { --gut: 40px; }
   .skills li { font-size: calc(13px + var(--w) * 9px); }
   .headline { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .metrics { grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); }
   .panel { padding: 30px 30px 26px; }
   .scrubber { left: 50%; right: auto; width: min(720px, calc(100% - 40px)); transform: translateX(-50%); bottom: 18px; }
   .webgl .scrubber { animation: upc 1s 1.6s both; }
@@ -218,6 +237,13 @@ h1 {
 @media (min-width: 1000px) {
   :root { --gut: 7vw; }
   .hero { align-items: center; padding-bottom: 100px; }
+  .webgl .hero { display: flex; padding: 72px var(--gut) 110px; min-height: 100svh; }
+  .webgl .hero-inner { display: flex; flex-direction: column; }
+  .webgl .hero-top, .webgl .hero-more { display: contents; }
+  .webgl .hero-top .cue { order: 10; margin-top: 0; }
+  .webgl .hero-more > * { animation-delay: .9s; }
+  .webgl body::before { left: 66%; top: 50%; width: 70vw; height: 60vw; }
+  .foot { left: var(--gut); right: auto; bottom: 30px; justify-content: flex-start; text-align: left; max-width: calc(100% - 700px); }
   .scrim { background: linear-gradient(90deg, rgba(4,5,10,.82) 0%, rgba(4,5,10,.45) 38%, rgba(4,5,10,0) 62%); }
   .chapter { padding-top: 22vh; padding-bottom: 45vh; }
   .panel { background: linear-gradient(180deg, rgba(10,12,24,.86), rgba(6,7,14,.82)); }
@@ -258,9 +284,14 @@ h1 {
   .static .impact-inner { margin-left: auto; margin-right: auto; max-width: 860px; }
 }
 
-.webgl .panel:not(.pre), .webgl .impact-inner:not(.pre) { opacity: var(--fo, 1); }
+.webgl .panel.gone, .webgl .impact-inner.gone { opacity: .12; transform: translateY(-14px); }
 /* skip layout/paint of off-screen story sections until they approach the viewport */
+/* skip layout of off-screen sections at load; in WebGL mode the scene pre-renders them one per
+   idle slice after boot (.cv-on), so no section is laid out for the first time mid-scroll */
 .chapter, .impact-sec { content-visibility: auto; contain-intrinsic-size: auto 1600px; }
+.webgl .chapter, .webgl .impact-sec { contain-intrinsic-size: auto 1650px; }
+.webgl .cv-on { content-visibility: visible; }
+@media (min-width: 1000px) { .webgl .chapter, .webgl .impact-sec { contain-intrinsic-size: auto 1500px; } }
 
 .lbl.flip { padding: 3px 12px 3px 6px; }
 .lbl.flip::before { left: auto; right: 0; }
@@ -273,10 +304,10 @@ h1 {
 .pub a { display: inline-flex; align-items: center; min-height: 32px; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); font: 500 13px/1 var(--mono); color: #e6eaf3; text-decoration: none; }
 .pub a:hover { border-color: var(--accent); }
 .static .chapter, .static .impact-sec { contain-intrinsic-size: auto 1400px; }
-.webgl .chapter, .webgl .impact-sec { contain-intrinsic-size: auto 1650px; }
+
 @media (min-width: 1000px) {
   .static .chapter, .static .impact-sec { contain-intrinsic-size: auto 950px; }
-  .webgl .chapter, .webgl .impact-sec { contain-intrinsic-size: auto 1500px; }
+
 }
 
 /* ---------- premium panels without backdrop blur (cheap on every GPU) ---------- */
@@ -301,5 +332,19 @@ h1 {
   /* timeline sits to the right of the story column so it never covers a panel */
   .scrubber { left: auto; right: 24px; transform: none; width: clamp(320px, calc(93vw - 560px - 56px), 640px); }
   .webgl .scrubber { animation: up 1s 1.6s both; }
+/* phones: the timeline docks once the visitor starts moving through time */
+@media (max-width: 719px) {
+  .webgl .scrubber { animation: none; transition: transform .5s cubic-bezier(.2,.7,.2,1), opacity .4s; }
+  .webgl:not(.scrolled) .scrubber { transform: translateY(130%); opacity: 0; pointer-events: none; }
+}
 }
 @media (max-width: 719px) { .metrics dd { font-size: 24px; } }
+
+/* layout containment: HUD text/label updates never relayout the story */
+.scrubber { contain: layout paint; }
+#labels { contain: strict; }
+@media (max-width: 400px) {
+  .cbtns { gap: 0; }
+  .cbtn { width: 24px; height: 26px; }
+  .scrub-head { gap: 6px; }
+}
