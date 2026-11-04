@@ -4,8 +4,8 @@
 import {
   WebGLRenderer, Scene, PerspectiveCamera, BufferGeometry, BufferAttribute, Points,
   ShaderMaterial, LineSegments, AdditiveBlending, Color, Vector3, Group,
-} from 'three';
-import story from './data/story.json';
+} from './three-lite.js';
+let story;
 import { chapterIndex, timeBounds, fmtDate } from './render.js';
 
 // cooperative yielding so building the scene never blocks the main thread for long
@@ -36,7 +36,7 @@ function qualityTier() {
 }
 const TIERS = [
   { dpr: 1, stars: 500, nebula: 0, dust: 1200, maxPoints: 3000 },
-  { dpr: 1.25, stars: 1000, nebula: 70, dust: 2500, maxPoints: 7000 },
+  { dpr: 1.5, stars: 1000, nebula: 70, dust: 2500, maxPoints: 7000 },
   { dpr: 1.5, stars: 1800, nebula: 160, dust: 4500, maxPoints: 14000 },
 ];
 
@@ -48,6 +48,7 @@ attribute vec3 aColor;
 attribute float aT, aSize, aChap, aSeed;
 varying vec3 vColor;
 varying float vAlpha;
+varying float vBloom;
 void main() {
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
   float rev = smoothstep(aT - 0.004, aT + 0.012, uReveal);
@@ -63,6 +64,10 @@ void main() {
   float pulse = uPulseA * same * (exp(-pd * pd * 0.12) + 0.35);
   s *= 1.0 + 1.3 * pulse;
   a *= 1.0 + 2.2 * pulse;
+  // focused chapter blooms: bigger, softer halos
+  vBloom = clamp((w - 1.0) * 4.0, 0.0, 1.0) + 0.6 * pulse;
+  s *= 1.0 + 0.3 * vBloom;
+  a *= 1.0 / (1.0 + 0.45 * vBloom); // spread the light, don't just add it (avoids white-out in dense clusters)
   // keep sub-pixel points stable: never shrink below 2px, fade instead
   float ps = max(s, 2.6 * uPR);
   a *= min(1.0, s / (2.6 * uPR));
@@ -104,14 +109,37 @@ void main() {
   gl_FragColor = vec4((uColor + vec3(0.25)) * a * 1.4, 1.0);
 }`;
 
+const meteorVert = /* glsl */ `
+attribute float aI;
+uniform vec3 uHead, uDir;
+uniform float uLen, uA, uPR;
+varying float vA;
+void main() {
+  vec3 p = uHead - uDir * aI * uLen;
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  gl_PointSize = (3.2 - 2.4 * aI) * uPR;
+  vA = uA * pow(1.0 - aI, 1.6);
+  gl_Position = projectionMatrix * mv;
+}`;
+const meteorFrag = /* glsl */ `
+uniform vec3 uColor;
+varying float vA;
+void main() {
+  float d = length(gl_PointCoord - 0.5) * 2.0;
+  float a = (1.0 - smoothstep(0.2, 1.0, d)) * vA;
+  if (a < 0.003) discard;
+  gl_FragColor = vec4(uColor * a * 1.6, 1.0);
+}`;
+
 const commitFrag = /* glsl */ `
 varying vec3 vColor;
 varying float vAlpha;
+varying float vBloom;
 void main() {
   vec2 p = gl_PointCoord - 0.5;
   float d = dot(p, p) * 4.0;
   float core = exp(-d * 22.0);
-  float halo = exp(-d * 4.0) * 0.38;
+  float halo = exp(-d * 4.0) * (0.38 + 0.18 * vBloom) + exp(-d * 1.4) * 0.08 * vBloom;
   float a = (core + halo) * vAlpha;
   if (a < 0.003) discard;
   gl_FragColor = vec4((vColor * (core + halo) + vec3(core * 0.55)) * vAlpha, 1.0);
@@ -143,6 +171,7 @@ void main() {
 }`;
 
 export async function start({ onFail }) {
+  story = (await import('./data/story.json')).default;
   await yieldNow();
   const canvas = document.getElementById('gl');
   let renderer;
@@ -163,6 +192,7 @@ export async function start({ onFail }) {
   } catch { /* ignore */ }
   let tier = devTier() >= 0 ? devTier() : software ? 0 : qualityTier();
   let Q = software ? { ...TIERS[0], dpr: 0.75 } : TIERS[tier];
+  if (!software && tier === 2) document.documentElement.classList.add('hq');
   renderer.setClearColor(0x04050a, 1);
 
   const { chapters, repoChap } = chapterIndex(story);
@@ -357,6 +387,31 @@ export async function start({ onFail }) {
   ring.visible = false;
   galaxy.add(ring);
 
+  // ---------- shooting star (trail computed in the vertex shader; no buffer updates) ----------
+  const MN = 36;
+  const mGeo = new BufferGeometry();
+  mGeo.setAttribute('position', new BufferAttribute(new Float32Array(MN * 3), 3));
+  mGeo.setAttribute('aI', new BufferAttribute(Float32Array.from({ length: MN }, (_, i) => i / (MN - 1)), 1));
+  const meteorU = { uHead: { value: new Vector3() }, uDir: { value: new Vector3(1, 0, 0) }, uLen: { value: 14 }, uA: { value: 0 }, uPR: uniforms.uPR, uColor: { value: new Color(1, 1, 1) } };
+  const meteor = new Points(mGeo, new ShaderMaterial({
+    uniforms: meteorU, vertexShader: meteorVert, fragmentShader: meteorFrag,
+    transparent: true, blending: AdditiveBlending, depthWrite: false, depthTest: false,
+  }));
+  meteor.frustumCulled = false;
+  meteor.visible = false;
+  galaxy.add(meteor);
+  const mState = { t: 9, life: 1.3, from: new Vector3(), vel: new Vector3(), next: 5 };
+  function launchMeteor(target, color) {
+    const dir = new Vector3(hash(time * 3.1) - 0.5, (hash(time * 5.3) - 0.5) * 0.4, hash(time * 7.7) - 0.5).normalize();
+    const c = target || new Vector3((hash(time) - 0.5) * 50, (hash(time * 1.7) - 0.5) * 10, (hash(time * 2.3) - 0.5) * 50);
+    mState.from.copy(c).addScaledVector(dir, -22);
+    mState.vel.copy(dir).multiplyScalar(36);
+    mState.t = 0;
+    meteorU.uDir.value.copy(dir);
+    meteorU.uColor.value.copy(color || white).lerp(white, 0.4);
+    meteor.visible = true;
+  }
+
   // ---------- background stars + nebula ----------
   async function softPoints(n, fill, world, alpha) {
     const p = new Float32Array(n * 3), c = new Float32Array(n * 3), s = new Float32Array(n), sd = new Float32Array(n);
@@ -524,10 +579,12 @@ export async function start({ onFail }) {
     return a === b ? a : `${a} – ${b}`;
   });
   const labelsEl = document.getElementById('labels');
-  const placed = [];
   const repoById = new Map((story.repos || []).map((r) => [r.id, r]));
+  const placed = [];
   const labelSets = chapters.map((c, ci) => {
+    const hasFeatured = (story.repos || []).some((r) => typeof r.featured === 'boolean');
     const ids = [...repoNode.keys()].filter((id) => repoChap.get(id) === ci)
+      .filter((id) => { const r = repoById.get(id); return !hasFeatured || (r && (r.featured || (r.public && r.url))); })
       .sort((a, b) => (repoAcc.get(b)?.n || 0) - (repoAcc.get(a)?.n || 0)).slice(0, 6);
     return ids.map((id, rank) => {
       const el = document.createElement('span');
@@ -649,6 +706,7 @@ export async function start({ onFail }) {
         if (perfAcc / perfN > 1 / 40) {
           degraded = true; Q = TIERS[0];
           if (nebula) nebula.visible = false;
+          document.documentElement.classList.remove('hq');
           resize(true);
         }
         perfAcc = 0; perfN = 0;
@@ -676,12 +734,22 @@ export async function start({ onFail }) {
     mx = damp(mx, tmx, 2, dt); my = damp(my, tmy, 2, dt);
     tPos.x += mx * 4; tPos.y -= my * 3;
 
+    // cinematic intro: the camera swings in on an arc from low and far while the stars ignite
+    const qi = clamp(el / 4.4, 0, 1);
+    if (qi < 1 && P < 0.5) {
+      const e = 1 - Math.pow(1 - qi, 3);
+      const v = tmp.copy(tPos).sub(tLook);
+      const ang = (1 - e) * 1.9, ca = Math.cos(ang), sa = Math.sin(ang);
+      const vx = v.x * ca - v.z * sa, vz = v.x * sa + v.z * ca;
+      v.set(vx, v.y * (0.25 + 0.75 * e), vz).multiplyScalar(1 + (1 - e) * 0.9);
+      tPos.copy(tLook).add(v);
+    }
     if (first) {
-      camPos.copy(tPos).multiplyScalar(1.6); camLook.copy(tLook); first = false;
+      camPos.copy(tPos); camLook.copy(tLook); first = false;
       view.ox = (A.ox + (B.ox - A.ox) * f); view.oy = (A.oy + (B.oy - A.oy) * f);
       applyView();
     }
-    const kk = rv < 1 ? 1.1 : 2.6;
+    const kk = qi < 1 && P < 0.5 ? 8 : 2.6;
     camPos.x = damp(camPos.x, tPos.x, kk, dt); camPos.y = damp(camPos.y, tPos.y, kk, dt); camPos.z = damp(camPos.z, tPos.z, kk, dt);
     camLook.x = damp(camLook.x, tLook.x, 3, dt); camLook.y = damp(camLook.y, tLook.y, 3, dt); camLook.z = damp(camLook.z, tLook.z, 3, dt);
     camera.position.copy(camPos);
@@ -744,6 +812,7 @@ export async function start({ onFail }) {
       if (arr >= 0 && rv >= 1) {
         pulseT = 0; lineDraw[arr] = 0;
         uniforms.uPulseC.value.copy(chapInfo[arr].c);
+        launchMeteor(chapInfo[arr].c, chapColor[arr]);
         ring.position.copy(chapInfo[arr].c);
         ringU.uColor.value.copy(chapColor[arr]);
         ringU.uSize.value = chapInfo[arr].rad * 7 + 18;
@@ -751,6 +820,16 @@ export async function start({ onFail }) {
       }
     }
     pulseT += dt;
+    // occasional shooting star while the visitor is reading
+    mState.next -= dt;
+    if (mState.next <= 0 && rv >= 1) { launchMeteor(null, null); mState.next = 7 + hash(time) * 6; }
+    if (mState.t < mState.life) {
+      mState.t += dt;
+      const k = mState.t / mState.life;
+      meteorU.uHead.value.copy(mState.from).addScaledVector(mState.vel, mState.t);
+      meteorU.uA.value = Math.sin(Math.PI * clamp(k, 0, 1)) * 0.9;
+      meteorU.uLen.value = 6 + 12 * Math.min(1, k * 3);
+    } else if (meteor.visible) meteor.visible = false;
     uniforms.uPulseR.value = pulseT * 20;
     uniforms.uPulseA.value = pulseT < 4 ? Math.exp(-pulseT * 1.2) : 0;
     ring.visible = pulseT < 1.6;
@@ -788,7 +867,7 @@ export async function start({ onFail }) {
         // skip off-screen labels and ones that would collide with a higher-ranked label
         if (!L.w) L.w = L.el.offsetWidth + 2 || 14 + L.el.textContent.length * 7.4;
         // keep labels inside the viewport: flip to the left of the star when they would overflow
-        const bw = L.w, bh = 18, by = y - 9;
+        const bw = L.w, bh = 24, by = y - 12;
         const flip = x + bw > vw - 6;
         let bx = flip ? x - bw : x;
         if (flip !== !!L.flip) { L.flip = flip; L.el.classList.toggle('flip', flip); }
@@ -805,7 +884,7 @@ export async function start({ onFail }) {
     });
 
     revealDone = rv >= 1 && el > 4;
-    settled = rv >= 1 && pulseT > 1.7 && camPos.distanceToSquared(tPos) < 0.002 && Math.abs(nowT - tNow) < 0.002;
+    settled = rv >= 1 && pulseT > 1.7 && mState.t >= mState.life && camPos.distanceToSquared(tPos) < 0.002 && Math.abs(nowT - tNow) < 0.002;
     renderer.render(scene, camera);
   }
 

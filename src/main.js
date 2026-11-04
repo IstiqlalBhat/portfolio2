@@ -8,10 +8,20 @@ function toStatic(err) {
   root.classList.add('static');
 }
 
-function boot() {
-  import('./galaxy.js')
-    .then((m) => m.start({ onFail: toStatic }))
-    .catch(toStatic);
+const nextTask = () => new Promise((r) => setTimeout(r, 0));
+
+// Evaluate the big pieces in separate tasks (three.js, then the scene code, then the data
+// inside start()) so no single script evaluation blocks the main thread for long.
+async function boot() {
+  try {
+    await import('./three-lite.js');
+    await nextTask();
+    const m = await import('./galaxy.js');
+    await nextTask();
+    await m.start({ onFail: toStatic });
+  } catch (e) {
+    toStatic(e);
+  }
 }
 
 // Load the 3D scene only after first paint and when the main thread is idle,

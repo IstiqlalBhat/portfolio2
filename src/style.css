@@ -92,10 +92,10 @@ h1 {
 .panel h2 { font-size: clamp(30px, 8vw, 50px); font-weight: 780; letter-spacing: -0.035em; line-height: 1.02; margin-bottom: 10px;  }
 .kicker { color: var(--c); font-size: 17px; font-weight: 550; line-height: 1.35; margin-bottom: 14px; filter: brightness(1.15); }
 .narrative { color: #d2d8e6; font-size: 15px; line-height: 1.58; margin-bottom: 16px; }
-.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 1px; margin-bottom: 18px; border-radius: 12px; overflow: hidden; background: var(--line); border: 1px solid var(--line); }
-.metrics div { background: rgba(8,10,20,.95); padding: 12px 12px 10px; display: flex; flex-direction: column-reverse; justify-content: flex-end; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 1px; margin-bottom: 18px; border-radius: 12px; overflow: hidden; background: var(--line); border: 1px solid var(--line); }
+.metrics div { background: rgba(8,10,20,.95); padding: 12px 12px 10px; display: flex; flex-direction: column; justify-content: flex-start; min-width: 0; }
 .metrics dd { font-size: 26px; font-weight: 750; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums; color: #fff; }
-.metrics dt { font: 500 12px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.metrics dt { font: 500 12px/1.3 var(--mono); letter-spacing: .04em; overflow-wrap: anywhere; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
 .sub { font: 600 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
 .impact { margin-bottom: 18px; display: grid; gap: 9px; }
 .impact li { position: relative; padding-left: 20px; font-size: 15px; line-height: 1.5; color: #eef1f8; }
@@ -278,3 +278,28 @@ h1 {
   .static .chapter, .static .impact-sec { contain-intrinsic-size: auto 950px; }
   .webgl .chapter, .webgl .impact-sec { contain-intrinsic-size: auto 1500px; }
 }
+
+/* ---------- premium panels without backdrop blur (cheap on every GPU) ---------- */
+.panel, .impact-inner {
+  background:
+    radial-gradient(120% 55% at 0% 0%, color-mix(in srgb, var(--c, #7dd3fc) 17%, transparent), transparent 62%),
+    radial-gradient(90% 40% at 100% 100%, color-mix(in srgb, var(--c, #a78bfa) 8%, transparent), transparent 70%),
+    linear-gradient(180deg, rgba(14,16,30,.93), rgba(6,7,14,.91));
+  border: 1px solid color-mix(in srgb, var(--c, #7dd3fc) 24%, rgba(255,255,255,.08));
+  box-shadow: 0 50px 120px -50px color-mix(in srgb, var(--c, #7dd3fc) 55%, transparent),
+    0 30px 80px -30px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.09);
+}
+.impact-inner { --c: #8ab4ff; }
+/* real glass only where the GPU is strong (set by the scene for the top quality tier) */
+@media (min-width: 1000px) {
+  .hq .panel, .hq .impact-inner {
+    -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+    background:
+      radial-gradient(120% 55% at 0% 0%, color-mix(in srgb, var(--c, #7dd3fc) 18%, transparent), transparent 62%),
+      linear-gradient(180deg, rgba(14,16,30,.66), rgba(6,7,14,.6));
+  }
+  /* timeline sits to the right of the story column so it never covers a panel */
+  .scrubber { left: auto; right: 24px; transform: none; width: clamp(320px, calc(93vw - 560px - 56px), 640px); }
+  .webgl .scrubber { animation: up 1s 1.6s both; }
+}
+@media (max-width: 719px) { .metrics dd { font-size: 24px; } }
