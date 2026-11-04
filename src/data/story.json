@@ -7,7 +7,7 @@
   "role": "AI Engineer",
   "githubUrl": "https://github.com/IstiqlalBhat",
   "hook": "AI that sees, listens, and runs other AIs — 412 PRs merged in 9 months.",
-  "subhook": "AI engineer at an AI venture studio. Built: a vision-priced home inventory for insurance claims, a voice AI with long-term memory, and a multi-tenant OS for AI agents — end to end, from the model call down to the Terraform."
+  "subhook": "AI engineer at an AI venture studio. Built: an AI home inventory for insurance claims (vision-detected, AI-priced), a voice AI with long-term memory, and a multi-tenant OS for AI agents — end to end, from the model call down to the Terraform."
  },
  "headline": [
   {
@@ -17,17 +17,17 @@
   },
   {
    "value": "410K+",
-   "label": "lines added through merged PRs",
+   "label": "lines added",
    "evidence": "stats.totals.merged_additions (floored to thousands)"
   },
   {
    "value": "3,415",
-   "label": "commits across 56 repositories",
+   "label": "commits",
    "evidence": "stats.totals.commits"
   },
   {
    "value": "9",
-   "label": "months shipping production AI",
+   "label": "months in prod",
    "evidence": "stats.timeline_monthly: first..last month with prs_merged>0, inclusive"
   }
  ],
@@ -80,6 +80,7 @@
    "public": false,
    "url": null,
    "description": "Embodied-carbon accounting for construction phases, recorded on-chain.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "Python",
@@ -97,6 +98,7 @@
    "public": false,
    "url": null,
    "description": "BIM-driven automated procurement, from smart contract to PostgreSQL.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "JavaScript",
@@ -114,6 +116,7 @@
    "public": false,
    "url": null,
    "description": "Coursework: classic ML plus an LLM for emotion-based recommendations.",
+   "featured": false,
    "stack": [
     "JavaScript",
     "CSS",
@@ -131,6 +134,7 @@
    "public": false,
    "url": null,
    "description": "Material data out of Revit BIM models into a blockchain-backed record.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "Python",
@@ -148,6 +152,7 @@
    "public": false,
    "url": null,
    "description": "Authorized penetration-testing coursework.",
+   "featured": false,
    "stack": [
     "Python",
     "Dockerfile"
@@ -163,6 +168,7 @@
    "public": true,
    "url": "https://github.com/IstiqlalBhat/istiqlalbhat",
    "description": "Public GitHub profile README, rebuilt as a terminal session.",
+   "featured": true,
    "stack": [],
    "chapter": "carbon-ledger",
    "commits": 49,
@@ -175,6 +181,7 @@
    "public": false,
    "url": null,
    "description": "Authorized penetration-testing coursework (C++).",
+   "featured": false,
    "stack": [
     "C++"
    ],
@@ -189,6 +196,7 @@
    "public": false,
    "url": null,
    "description": "Order and inventory management coursework in Java.",
+   "featured": false,
    "stack": [
     "Java"
    ],
@@ -203,6 +211,7 @@
    "public": false,
    "url": null,
    "description": "A browser text game built to learn AI-assisted coding.",
+   "featured": false,
    "stack": [
     "JavaScript",
     "CSS",
@@ -219,6 +228,7 @@
    "public": false,
    "url": null,
    "description": "AI assistant on a microcontroller wrist display.",
+   "featured": false,
    "stack": [
     "JavaScript",
     "C++",
@@ -236,6 +246,7 @@
    "public": false,
    "url": null,
    "description": "Research notebook on LLMs for autonomous driving.",
+   "featured": false,
    "stack": [
     "Jupyter Notebook",
     "Python"
@@ -251,6 +262,7 @@
    "public": true,
    "url": "https://github.com/IstiqlalBhat/portfolio",
    "description": "Public personal portfolio site.",
+   "featured": true,
    "stack": [
     "JavaScript",
     "CSS",
@@ -267,6 +279,7 @@
    "public": false,
    "url": null,
    "description": "LLM coaching app with analytics and chat.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "CSS",
@@ -284,6 +297,7 @@
    "public": false,
    "url": null,
    "description": "Liquid-glass 3D UI components.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "CSS",
@@ -301,6 +315,7 @@
    "public": false,
    "url": null,
    "description": "Mobile-optimised generative visual experience.",
+   "featured": false,
    "stack": [
     "JavaScript",
     "CSS",
@@ -317,6 +332,7 @@
    "public": false,
    "url": null,
    "description": "Email RAG chatbot with a GPU Graph-RAG notebook.",
+   "featured": false,
    "stack": [
     "Jupyter Notebook",
     "Python",
@@ -334,6 +350,7 @@
    "public": false,
    "url": null,
    "description": "Scroll-driven animated storytelling site.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "CSS",
@@ -350,6 +367,7 @@
    "public": false,
    "url": null,
    "description": "Map and feed app UI prototype.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "JavaScript"
@@ -365,6 +383,7 @@
    "public": false,
    "url": null,
    "description": "Marketing site rebuild.",
+   "featured": false,
    "stack": [
     "CSS",
     "TypeScript",
@@ -381,6 +400,7 @@
    "public": false,
    "url": null,
    "description": "Sensor data, anomaly detection and a live dashboard.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "PLpgSQL",
@@ -398,6 +418,7 @@
    "public": false,
    "url": null,
    "description": "Streaming text-to-speech experiment.",
+   "featured": false,
    "stack": [
     "Python"
    ],
@@ -412,6 +433,7 @@
    "public": false,
    "url": null,
    "description": "First agentic AI experiment.",
+   "featured": false,
    "stack": [
     "Python"
    ],
@@ -426,6 +448,7 @@
    "public": false,
    "url": null,
    "description": "Purchase-order parsing with Gemini.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "Python",
@@ -443,6 +466,7 @@
    "public": false,
    "url": null,
    "description": "Production build of the document parser.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "Python",
@@ -460,6 +484,7 @@
    "public": false,
    "url": null,
    "description": "Code-review sandbox.",
+   "featured": false,
    "stack": [
     "Python",
     "PLpgSQL",
@@ -477,6 +502,7 @@
    "public": false,
    "url": null,
    "description": "Flutter community app with a serverless backend.",
+   "featured": false,
    "stack": [
     "Dart",
     "EJS",
@@ -494,6 +520,7 @@
    "public": false,
    "url": null,
    "description": "Peer-to-peer AI agents for construction procurement.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "CSS",
@@ -511,6 +538,7 @@
    "public": false,
    "url": null,
    "description": "Voice-first AI agent: passive sessions, on-device STT, barge-in.",
+   "featured": false,
    "stack": [
     "Dart",
     "TypeScript",
@@ -528,6 +556,7 @@
    "public": false,
    "url": null,
    "description": "Automated AI code review and PR-description workflows.",
+   "featured": false,
    "stack": [
     "Python",
     "TypeScript",
@@ -541,10 +570,11 @@
   },
   {
    "id": 29,
-   "label": "Private · voice product B",
+   "label": "Private · voice memory assistant",
    "public": false,
    "url": null,
    "description": "Voice-first assistant with Gemini Live, pgvector memory and an LLM wiki.",
+   "featured": true,
    "stack": [
     "Dart",
     "Python",
@@ -562,6 +592,7 @@
    "public": false,
    "url": null,
    "description": "Landing sites with WebGL hero backgrounds.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "HTML",
@@ -579,6 +610,7 @@
    "public": false,
    "url": null,
    "description": "WebSocket gateway running several speech models in parallel.",
+   "featured": false,
    "stack": [
     "Python",
     "HTML",
@@ -596,6 +628,7 @@
    "public": false,
    "url": null,
    "description": "Provenance flow and advisor knowledge app.",
+   "featured": false,
    "stack": [
     "JavaScript",
     "HTML",
@@ -613,6 +646,7 @@
    "public": false,
    "url": null,
    "description": "React Native field-capture client: photos and voice notes per room.",
+   "featured": false,
    "stack": [
     "TypeScript"
    ],
@@ -623,10 +657,11 @@
   },
   {
    "id": 34,
-   "label": "Private · vision product",
+   "label": "Private · AI home-inventory product",
    "public": false,
    "url": null,
    "description": "Photos in, priced itemised inventory out — for insurance claims.",
+   "featured": true,
    "stack": [
     "TypeScript",
     "JavaScript",
@@ -644,6 +679,7 @@
    "public": false,
    "url": null,
    "description": "Hand-gesture and realtime-voice control of smart lights.",
+   "featured": false,
    "stack": [
     "Python"
    ],
@@ -658,6 +694,7 @@
    "public": false,
    "url": null,
    "description": "Upload HTML/JS, render it in a sandbox, share by link.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "HTML",
@@ -675,6 +712,7 @@
    "public": false,
    "url": null,
    "description": "Django service with a local AWS simulation setup.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "Python",
@@ -692,6 +730,7 @@
    "public": false,
    "url": null,
    "description": "EKS, SQS workers, Postgres migration Job, contract tests.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "JavaScript",
@@ -709,6 +748,7 @@
    "public": false,
    "url": null,
    "description": "Terraform for a shared EKS platform.",
+   "featured": false,
    "stack": [
     "HCL",
     "Shell",
@@ -722,10 +762,11 @@
   },
   {
    "id": 40,
-   "label": "Private · agent platform",
+   "label": "Private · multi-tenant agent platform",
    "public": false,
    "url": null,
    "description": "Per-workspace AI agent teams on Kubernetes, with a web control plane.",
+   "featured": true,
    "stack": [
     "Shell",
     "TypeScript",
@@ -743,6 +784,7 @@
    "public": false,
    "url": null,
    "description": "Grounded extraction, contradiction resolution, cited answers.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "PLpgSQL",
@@ -760,6 +802,7 @@
    "public": false,
    "url": null,
    "description": "Verified webhook ingest feeding agent memory and a knowledge graph.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "JavaScript"
@@ -775,6 +818,7 @@
    "public": false,
    "url": null,
    "description": "Internal dashboards and per-user meeting routing.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "CSS",
@@ -792,6 +836,7 @@
    "public": false,
    "url": null,
    "description": "Landing page with server-side app download routing.",
+   "featured": false,
    "stack": [
     "CSS",
     "HTML",
@@ -804,10 +849,11 @@
   },
   {
    "id": 45,
-   "label": "Private · data pipeline B",
+   "label": "Private · meeting-to-agent router",
    "public": false,
    "url": null,
    "description": "Rules-first routing of meeting transcripts to agents.",
+   "featured": true,
    "stack": [
     "TypeScript",
     "CSS",
@@ -825,6 +871,7 @@
    "public": false,
    "url": null,
    "description": "Contextual-bandit router that learns which model earns its cost.",
+   "featured": false,
    "stack": [
     "Python"
    ],
@@ -839,6 +886,7 @@
    "public": false,
    "url": null,
    "description": "Phone camera streaming with motion-aware AI analysis.",
+   "featured": false,
    "stack": [
     "Python",
     "HTML",
@@ -856,6 +904,7 @@
    "public": false,
    "url": null,
    "description": "Tuned fork of an open-source agent-skills framework.",
+   "featured": false,
    "stack": [
     "Shell",
     "JavaScript",
@@ -873,6 +922,7 @@
    "public": false,
    "url": null,
    "description": "Scripted Android security-research workspace.",
+   "featured": false,
    "stack": [
     "Python",
     "Shell",
@@ -889,6 +939,7 @@
    "public": false,
    "url": null,
    "description": "Research case study on an AI assistant app's defenses.",
+   "featured": false,
    "stack": [],
    "chapter": "agent-os",
    "commits": 1,
@@ -901,6 +952,7 @@
    "public": false,
    "url": null,
    "description": "Agent skill that builds launch videos from code.",
+   "featured": false,
    "stack": [
     "JavaScript",
     "Shell",
@@ -917,6 +969,7 @@
    "public": false,
    "url": null,
    "description": "Chunking, labelling and Gemini-embedding retrieval behind a voice bot.",
+   "featured": false,
    "stack": [
     "Python",
     "HTML",
@@ -934,6 +987,7 @@
    "public": true,
    "url": "https://github.com/IstiqlalBhat/evil-llm",
    "description": "An open LLM steered by pushing two neurons, with a live 3D map of the effect.",
+   "featured": true,
    "stack": [
     "Jupyter Notebook",
     "HTML",
@@ -951,6 +1005,7 @@
    "public": false,
    "url": null,
    "description": "MVP of an agentic OS for physical operations.",
+   "featured": false,
    "stack": [
     "TypeScript",
     "Python",
@@ -968,6 +1023,7 @@
    "public": true,
    "url": "https://github.com/IstiqlalBhat/revit-agentic",
    "description": "An AI agent for Autodesk Revit.",
+   "featured": true,
    "stack": [
     "C#",
     "TypeScript"
@@ -2761,12 +2817,12 @@
      "label": "commits"
     },
     {
-     "value": "45",
+     "value": "50",
      "label": "PRs merged"
     },
     {
-     "value": "61K+",
-     "label": "lines added via merged PRs"
+     "value": "64K+",
+     "label": "lines added"
     }
    ],
    "stack": [
@@ -2799,7 +2855,7 @@
     "end": "2026-10"
    },
    "kicker": "The flagship: a computer-vision home-inventory product for insurance claims.",
-   "narrative": "Photograph a room; get back an itemised, priced inventory ready for an insurance claim. He built the two-pass vision pipeline at its core — detect every object, then identify each from a full-resolution crop — and judged fixes against human-labelled photos instead of eyeballing them. Pricing became a parallel retail-search fan-out with LLM ranking and a deterministic median, the AI pipeline moved onto per-upload task workers, and auth moved in phases to a new provider without breaking row-level security. The biggest codebase of the run, end to end: web, mobile, database and model calls.",
+   "narrative": "Photograph a room; get back an itemised, priced inventory ready for an insurance claim. He built the two-pass vision pipeline at its core — detect every object, then identify each from a full-resolution crop — and judged fixes against human-labelled photos instead of eyeballing them. Pricing became a parallel retail-search fan-out with LLM ranking, the AI pipeline moved onto per-upload task workers, and auth moved in phases to a new provider without breaking row-level security.",
    "impact": [
     {
      "claim": "Full inventories from a single photo: on a real claims photo, items found went from 1 to 11 with a detect-then-identify vision pipeline that reads each object from a full-resolution crop.",
@@ -2855,12 +2911,12 @@
      "label": "commits"
     },
     {
-     "value": "163",
+     "value": "152",
      "label": "PRs merged"
     },
     {
      "value": "147K+",
-     "label": "lines added via merged PRs"
+     "label": "lines added"
     }
    ],
    "stack": [
@@ -2887,7 +2943,7 @@
     "start": "2026-05",
     "end": "2026-06"
    },
-   "kicker": "321 commits in 16 days: the product re-platformed AWS-native.",
+   "kicker": "The same product, re-platformed AWS-native in a single sprint.",
    "narrative": "Then the same product, rebuilt from the ground up on AWS. Heavy LLM work moved onto an SQS worker pipeline that streams per-stage progress to clients over SSE; Terraform modules stood up web, API and workers on a shared EKS cluster with per-stage Postgres; schema migrations ran as a checksum-ledgered Kubernetes Job before every rollout. An architecture review closed with workers that stay correct under at-least-once delivery.",
    "impact": [
     {
@@ -2927,12 +2983,12 @@
      "label": "commits"
     },
     {
-     "value": "55",
+     "value": "49",
      "label": "PRs merged"
     },
     {
      "value": "23K+",
-     "label": "lines added via merged PRs"
+     "label": "lines added"
     }
    ],
    "stack": [
@@ -3005,7 +3061,7 @@
     },
     {
      "value": "44K+",
-     "label": "lines added via merged PRs"
+     "label": "lines added"
     }
    ],
    "stack": [
@@ -3036,7 +3092,7 @@
     "end": "2026-11"
    },
    "kicker": "A multi-tenant platform where every workspace gets its own team of AI agents.",
-   "narrative": "The latest arc: a multi-tenant platform that provisions a private team of AI agents for each workspace on Kubernetes. He wrote its registration control plane, per-tenant agent rosters, per-agent skill allowlists, owner-approved tasks that agents propose from meetings, and an audited superadmin panel. The hard parts were distributed-systems parts — stale queue messages fenced off with instance and operation IDs, terminal failures that stopped retrying forever, agents hot-added without restarting the gateway. Along the way a fix landed upstream in the open-source agent runtime itself, and on the side he steered an open LLM by pushing two neurons and came full circle with an AI agent for Revit.",
+   "narrative": "The latest arc: a multi-tenant platform that provisions a private team of AI agents for each workspace on Kubernetes — control plane, per-tenant rosters, skill allowlists, owner-approved tasks, audited admin. The hard parts were distributed-systems parts: stale queue messages fenced with instance and operation IDs, terminal failures that stopped retrying forever, agents hot-added without a gateway restart. On the side, a fix landed upstream in an open-source agent runtime, an open LLM was steered by pushing two neurons, and an AI agent for Revit closed the circle.",
    "impact": [
     {
      "claim": "Any company can sign up and get its own agent team: a registration control plane with OAuth, verified email, rate limits and onboarding (~27k lines, 104 files).",
@@ -3104,12 +3160,12 @@
      "label": "commits"
     },
     {
-     "value": "117",
+     "value": "116",
      "label": "PRs merged"
     },
     {
      "value": "129K+",
-     "label": "lines added via merged PRs"
+     "label": "lines added"
     }
    ],
    "stack": [
