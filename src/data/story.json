@@ -12,7 +12,7 @@
  "headline": [
   {
    "value": "412",
-   "label": "pull requests merged (excluding mirrors and release syncs)",
+   "label": "PRs merged",
    "evidence": "stats.totals.prs_merged_excluding_mirrors_and_release_sync (strict: no personal-repo mirrors, no release/promotion/sync PRs)"
   },
   {
@@ -76,7 +76,7 @@
  "repos": [
   {
    "id": 0,
-   "label": "Private · blockchain carbon accounting",
+   "label": "Private · research prototype A",
    "public": false,
    "url": null,
    "description": "Embodied-carbon accounting for construction phases, recorded on-chain.",
@@ -93,7 +93,7 @@
   },
   {
    "id": 1,
-   "label": "Private · BIM procurement prototype",
+   "label": "Private · research prototype B",
    "public": false,
    "url": null,
    "description": "BIM-driven automated procurement, from smart contract to PostgreSQL.",
@@ -110,7 +110,7 @@
   },
   {
    "id": 2,
-   "label": "Private · mood-based recommender",
+   "label": "Private · coursework A",
    "public": false,
    "url": null,
    "description": "Coursework: classic ML plus an LLM for emotion-based recommendations.",
@@ -127,7 +127,7 @@
   },
   {
    "id": 3,
-   "label": "Private · Revit-to-ledger pipeline",
+   "label": "Private · research prototype C",
    "public": false,
    "url": null,
    "description": "Material data out of Revit BIM models into a blockchain-backed record.",
@@ -144,7 +144,7 @@
   },
   {
    "id": 4,
-   "label": "Private · security coursework A",
+   "label": "Private · coursework B",
    "public": false,
    "url": null,
    "description": "Authorized penetration-testing coursework.",
@@ -171,7 +171,7 @@
   },
   {
    "id": 6,
-   "label": "Private · security coursework B",
+   "label": "Private · coursework C",
    "public": false,
    "url": null,
    "description": "Authorized penetration-testing coursework (C++).",
@@ -185,7 +185,7 @@
   },
   {
    "id": 7,
-   "label": "Private · Java coursework",
+   "label": "Private · coursework D",
    "public": false,
    "url": null,
    "description": "Order and inventory management coursework in Java.",
@@ -199,7 +199,7 @@
   },
   {
    "id": 8,
-   "label": "Private · interactive text game",
+   "label": "Private · web game",
    "public": false,
    "url": null,
    "description": "A browser text game built to learn AI-assisted coding.",
@@ -215,7 +215,7 @@
   },
   {
    "id": 9,
-   "label": "Private · wrist-worn AI assistant",
+   "label": "Private · hardware prototype A",
    "public": false,
    "url": null,
    "description": "AI assistant on a microcontroller wrist display.",
@@ -232,7 +232,7 @@
   },
   {
    "id": 10,
-   "label": "Private · LLMs on autonomous vehicles",
+   "label": "Private · research notebook",
    "public": false,
    "url": null,
    "description": "Research notebook on LLMs for autonomous driving.",
@@ -263,7 +263,7 @@
   },
   {
    "id": 12,
-   "label": "Private · AI coaching app",
+   "label": "Private · LLM app A",
    "public": false,
    "url": null,
    "description": "LLM coaching app with analytics and chat.",
@@ -280,7 +280,7 @@
   },
   {
    "id": 13,
-   "label": "Private · 3D UI experiments",
+   "label": "Private · UI experiment A",
    "public": false,
    "url": null,
    "description": "Liquid-glass 3D UI components.",
@@ -297,7 +297,7 @@
   },
   {
    "id": 14,
-   "label": "Private · generative art site",
+   "label": "Private · UI experiment B",
    "public": false,
    "url": null,
    "description": "Mobile-optimised generative visual experience.",
@@ -313,7 +313,7 @@
   },
   {
    "id": 15,
-   "label": "Private · email Graph-RAG",
+   "label": "Private · retrieval prototype A",
    "public": false,
    "url": null,
    "description": "Email RAG chatbot with a GPU Graph-RAG notebook.",
@@ -330,7 +330,7 @@
   },
   {
    "id": 16,
-   "label": "Private · scroll-driven animation site",
+   "label": "Private · web build A",
    "public": false,
    "url": null,
    "description": "Scroll-driven animated storytelling site.",
@@ -346,7 +346,7 @@
   },
   {
    "id": 17,
-   "label": "Private · map-feed app UI",
+   "label": "Private · UI experiment C",
    "public": false,
    "url": null,
    "description": "Map and feed app UI prototype.",
@@ -361,7 +361,7 @@
   },
   {
    "id": 18,
-   "label": "Private · client website",
+   "label": "Private · web build B",
    "public": false,
    "url": null,
    "description": "Marketing site rebuild.",
@@ -377,7 +377,7 @@
   },
   {
    "id": 19,
-   "label": "Private · IoT anomaly detection",
+   "label": "Private · hardware prototype B",
    "public": false,
    "url": null,
    "description": "Sensor data, anomaly detection and a live dashboard.",
@@ -394,7 +394,7 @@
   },
   {
    "id": 20,
-   "label": "Private · real-time TTS",
+   "label": "Private · speech experiment A",
    "public": false,
    "url": null,
    "description": "Streaming text-to-speech experiment.",
@@ -408,7 +408,7 @@
   },
   {
    "id": 21,
-   "label": "Private · first agent experiment",
+   "label": "Private · agent experiment A",
    "public": false,
    "url": null,
    "description": "First agentic AI experiment.",
@@ -422,7 +422,7 @@
   },
   {
    "id": 22,
-   "label": "Private · LLM document parser",
+   "label": "Private · LLM app B",
    "public": false,
    "url": null,
    "description": "Purchase-order parsing with Gemini.",
@@ -439,7 +439,7 @@
   },
   {
    "id": 23,
-   "label": "Private · LLM parser, interview build",
+   "label": "Private · LLM app C",
    "public": false,
    "url": null,
    "description": "Production build of the document parser.",
@@ -456,7 +456,7 @@
   },
   {
    "id": 24,
-   "label": "Private · review sandbox",
+   "label": "Private · sandbox",
    "public": false,
    "url": null,
    "description": "Code-review sandbox.",
@@ -473,7 +473,7 @@
   },
   {
    "id": 25,
-   "label": "Private · community mobile app",
+   "label": "Private · mobile app A",
    "public": false,
    "url": null,
    "description": "Flutter community app with a serverless backend.",
@@ -490,7 +490,7 @@
   },
   {
    "id": 26,
-   "label": "Private · agent-to-agent procurement",
+   "label": "Private · agent experiment B",
    "public": false,
    "url": null,
    "description": "Peer-to-peer AI agents for construction procurement.",
@@ -507,7 +507,7 @@
   },
   {
    "id": 27,
-   "label": "Private · voice agent for field workers",
+   "label": "Private · voice product A",
    "public": false,
    "url": null,
    "description": "Voice-first AI agent: passive sessions, on-device STT, barge-in.",
@@ -524,7 +524,7 @@
   },
   {
    "id": 28,
-   "label": "Private · AI code-review CI",
+   "label": "Private · CI automation",
    "public": false,
    "url": null,
    "description": "Automated AI code review and PR-description workflows.",
@@ -541,7 +541,7 @@
   },
   {
    "id": 29,
-   "label": "Private · voice AI memory assistant",
+   "label": "Private · voice product B",
    "public": false,
    "url": null,
    "description": "Voice-first assistant with Gemini Live, pgvector memory and an LLM wiki.",
@@ -558,7 +558,7 @@
   },
   {
    "id": 30,
-   "label": "Private · product landing sites",
+   "label": "Private · web build C",
    "public": false,
    "url": null,
    "description": "Landing sites with WebGL hero backgrounds.",
@@ -575,7 +575,7 @@
   },
   {
    "id": 31,
-   "label": "Private · streaming transcription",
+   "label": "Private · speech experiment B",
    "public": false,
    "url": null,
    "description": "WebSocket gateway running several speech models in parallel.",
@@ -592,7 +592,7 @@
   },
   {
    "id": 32,
-   "label": "Private · advisor knowledge app",
+   "label": "Private · LLM app D",
    "public": false,
    "url": null,
    "description": "Provenance flow and advisor knowledge app.",
@@ -609,7 +609,7 @@
   },
   {
    "id": 33,
-   "label": "Private · inventory capture mobile app",
+   "label": "Private · mobile app B",
    "public": false,
    "url": null,
    "description": "React Native field-capture client: photos and voice notes per room.",
@@ -623,7 +623,7 @@
   },
   {
    "id": 34,
-   "label": "Private · vision home-inventory product",
+   "label": "Private · vision product",
    "public": false,
    "url": null,
    "description": "Photos in, priced itemised inventory out — for insurance claims.",
@@ -640,7 +640,7 @@
   },
   {
    "id": 35,
-   "label": "Private · gesture + voice smart lights",
+   "label": "Private · hardware prototype C",
    "public": false,
    "url": null,
    "description": "Hand-gesture and realtime-voice control of smart lights.",
@@ -654,7 +654,7 @@
   },
   {
    "id": 36,
-   "label": "Private · sandboxed page sharing",
+   "label": "Private · internal app A",
    "public": false,
    "url": null,
    "description": "Upload HTML/JS, render it in a sandbox, share by link.",
@@ -671,7 +671,7 @@
   },
   {
    "id": 37,
-   "label": "Private · local AWS simulation",
+   "label": "Private · cloud platform B",
    "public": false,
    "url": null,
    "description": "Django service with a local AWS simulation setup.",
@@ -688,7 +688,7 @@
   },
   {
    "id": 38,
-   "label": "Private · AWS-native product rebuild",
+   "label": "Private · cloud platform A",
    "public": false,
    "url": null,
    "description": "EKS, SQS workers, Postgres migration Job, contract tests.",
@@ -705,7 +705,7 @@
   },
   {
    "id": 39,
-   "label": "Private · Terraform infrastructure",
+   "label": "Private · infrastructure as code",
    "public": false,
    "url": null,
    "description": "Terraform for a shared EKS platform.",
@@ -722,7 +722,7 @@
   },
   {
    "id": 40,
-   "label": "Private · multi-tenant agent platform",
+   "label": "Private · agent platform",
    "public": false,
    "url": null,
    "description": "Per-workspace AI agent teams on Kubernetes, with a web control plane.",
@@ -739,7 +739,7 @@
   },
   {
    "id": 41,
-   "label": "Private · self-evolving company memory",
+   "label": "Private · retrieval prototype B",
    "public": false,
    "url": null,
    "description": "Grounded extraction, contradiction resolution, cited answers.",
@@ -756,7 +756,7 @@
   },
   {
    "id": 42,
-   "label": "Private · transcript ingest + knowledge graph",
+   "label": "Private · data pipeline A",
    "public": false,
    "url": null,
    "description": "Verified webhook ingest feeding agent memory and a knowledge graph.",
@@ -771,7 +771,7 @@
   },
   {
    "id": 43,
-   "label": "Private · internal utilities hub",
+   "label": "Private · internal app B",
    "public": false,
    "url": null,
    "description": "Internal dashboards and per-user meeting routing.",
@@ -788,7 +788,7 @@
   },
   {
    "id": 44,
-   "label": "Private · product landing page",
+   "label": "Private · web build D",
    "public": false,
    "url": null,
    "description": "Landing page with server-side app download routing.",
@@ -804,7 +804,7 @@
   },
   {
    "id": 45,
-   "label": "Private · meeting-to-agent routing",
+   "label": "Private · data pipeline B",
    "public": false,
    "url": null,
    "description": "Rules-first routing of meeting transcripts to agents.",
@@ -821,7 +821,7 @@
   },
   {
    "id": 46,
-   "label": "Private · bandit LLM router",
+   "label": "Private · LLM app E",
    "public": false,
    "url": null,
    "description": "Contextual-bandit router that learns which model earns its cost.",
@@ -835,7 +835,7 @@
   },
   {
    "id": 47,
-   "label": "Private · phone-as-camera system",
+   "label": "Private · hardware prototype D",
    "public": false,
    "url": null,
    "description": "Phone camera streaming with motion-aware AI analysis.",
@@ -852,7 +852,7 @@
   },
   {
    "id": 48,
-   "label": "Private · agent-skills fork",
+   "label": "Private · agent tooling A",
    "public": false,
    "url": null,
    "description": "Tuned fork of an open-source agent-skills framework.",
@@ -869,7 +869,7 @@
   },
   {
    "id": 49,
-   "label": "Private · mobile security toolkit",
+   "label": "Private · security research A",
    "public": false,
    "url": null,
    "description": "Scripted Android security-research workspace.",
@@ -885,7 +885,7 @@
   },
   {
    "id": 50,
-   "label": "Private · agent security case study",
+   "label": "Private · security research B",
    "public": false,
    "url": null,
    "description": "Research case study on an AI assistant app's defenses.",
@@ -897,7 +897,7 @@
   },
   {
    "id": 51,
-   "label": "Private · launch-video agent skill",
+   "label": "Private · agent tooling B",
    "public": false,
    "url": null,
    "description": "Agent skill that builds launch videos from code.",
@@ -913,7 +913,7 @@
   },
   {
    "id": 52,
-   "label": "Private · agentic RAG voice bot",
+   "label": "Private · retrieval prototype C",
    "public": false,
    "url": null,
    "description": "Chunking, labelling and Gemini-embedding retrieval behind a voice bot.",
@@ -947,7 +947,7 @@
   },
   {
    "id": 54,
-   "label": "Private · physical-world agent OS",
+   "label": "Private · agent experiment C",
    "public": false,
    "url": null,
    "description": "MVP of an agentic OS for physical operations.",
@@ -2593,23 +2593,23 @@
   {
    "id": "carbon-ledger",
    "index": 1,
-   "title": "Carbon on the Chain",
+   "title": "Prologue: Carbon on the Chain",
    "period": {
     "start": "2025-03",
     "end": "2025-12"
    },
-   "kicker": "Research roots: making a building's carbon footprint tamper-proof.",
-   "narrative": "The story starts in construction research, not in a chat window. Material quantities pulled straight out of Revit BIM models through pyRevit, embodied-carbon maths for the construction phases, and the results written to Ethereum smart contracts so nobody could quietly edit them later. When on-chain storage got too expensive, the procurement prototype was re-based onto PostgreSQL — an early lesson in shipping the version that actually works.",
+   "kicker": "Research roots: a building's carbon footprint, made tamper-proof.",
+   "narrative": "It starts in construction research: material quantities pulled out of Revit BIM models, embodied carbon computed, results written to Ethereum so no one could quietly edit them. When on-chain costs bit, the prototype moved to PostgreSQL — ship the version that works.",
    "impact": [
     {
-     "claim": "Built a pipeline that extracts material data from Revit BIM models via pyRevit and records embodied-carbon results on an Ethereum ledger.",
+     "claim": "Carbon records nobody can quietly edit: Revit BIM material data extracted via pyRevit, embodied carbon computed and written to an Ethereum ledger.",
      "evidence": [
       "E64",
       "E65"
      ]
     },
     {
-     "claim": "Prototyped BIM-driven automated procurement on a Solidity contract, then re-based it onto PostgreSQL to escape on-chain costs.",
+     "claim": "Procurement that survives real costs: a BIM-driven Solidity prototype re-based onto PostgreSQL.",
      "evidence": [
       "E63"
      ]
@@ -2619,19 +2619,13 @@
     {
      "value": "118",
      "label": "commits"
-    },
-    {
-     "value": "9",
-     "label": "repositories"
     }
    ],
    "stack": [
     "Python",
     "pyRevit",
     "Solidity",
-    "Ethereum",
-    "TypeScript",
-    "PostgreSQL"
+    "Ethereum"
    ],
    "repoIds": [
     0,
@@ -2658,27 +2652,21 @@
    "narrative": "Nobody assigned any of this. A Graph-RAG chatbot over a raw email archive, run on GPU in a notebook; an LLM parser that turns emailed purchase orders into structured records with duplicate detection; an IoT sensor rig with anomaly detection and a live dashboard; real-time speech experiments; and a public portfolio rebuilt commit by commit. It was practice — and it is exactly the toolkit the next chapter needed.",
    "impact": [
     {
-     "claim": "Email RAG chatbot: archive extraction, hybrid retrieval and a GPU-accelerated Graph-RAG notebook.",
+     "claim": "Questions answered over a raw email archive: hybrid retrieval plus a GPU-accelerated Graph-RAG notebook.",
      "evidence": [
       "E66"
      ]
     },
     {
-     "claim": "LLM document parser that turns purchase-order emails into structured, de-duplicated records with Gemini.",
+     "claim": "Purchase-order emails turned into structured, de-duplicated records automatically, with Gemini doing the parsing.",
      "evidence": [
       "E67"
      ]
     },
     {
-     "claim": "IoT sensor project with ML anomaly detection and a live dashboard.",
+     "claim": "Sensor anomalies flagged live: an IoT rig with ML anomaly detection streaming to a dashboard.",
      "evidence": [
       "E68"
-     ]
-    },
-    {
-     "claim": "Public portfolio site, hand-built and iterated across 125 commits.",
-     "evidence": [
-      "E62"
      ]
     }
    ],
@@ -2734,33 +2722,33 @@
    "narrative": "Joining an AI venture studio, the first hard product was a voice assistant that remembers. He moved its real-time loop from GPT-4o Realtime to Gemini Live, gave it pgvector recall over past sessions, embedded photos together with their AI analysis for multimodal memory, and built an LLM-maintained wiki that compiles conversations into interlinked pages. Then the unglamorous half that makes it real: on-device iOS speech, a microphone that sometimes stayed silent on cold start, and intermittent production not-found errors traced back through server logs.",
    "impact": [
     {
-     "claim": "Migrated real-time voice from GPT-4o Realtime to Gemini Live, cutting the audio flush threshold from ~1.5s to ~0.3s.",
+     "claim": "Snappier voice replies: audio flush threshold cut from ~1.5s to ~0.3s by moving real-time voice from GPT-4o Realtime to Gemini Live.",
      "evidence": [
       "E3"
      ]
     },
     {
-     "claim": "Shipped long-term memory: pgvector semantic recall over past sessions plus joint image + text embeddings.",
+     "claim": "An assistant that remembers what it heard and saw: pgvector recall over past sessions plus joint image + text embeddings.",
      "evidence": [
       "E4",
       "E5"
      ]
     },
     {
-     "claim": "Built an LLM-maintained knowledge base: sessions compiled into interlinked wiki pages by an async two-model pipeline, queried with hybrid wiki + vector search.",
+     "claim": "Conversations become a living knowledge base: sessions compiled into interlinked wiki pages by an async two-model pipeline, searched with hybrid wiki + vector retrieval.",
      "evidence": [
       "E7"
      ]
     },
     {
-     "claim": "Added native on-device iOS speech-to-text and fixed a first-session silent-microphone failure on iOS cold start.",
+     "claim": "No more silent first sessions on iPhone: native on-device speech-to-text and a cold-start microphone fix that probes for real audio and retries.",
      "evidence": [
       "E1",
       "E8"
      ]
     },
     {
-     "claim": "Migrated auth from SimpleJWT to Firebase with a verified path for existing accounts, then root-caused intermittent production 404s from server logs.",
+     "claim": "Existing accounts carried across an auth migration (SimpleJWT to Firebase) with a verified path, and intermittent production 404s root-caused from server logs.",
      "evidence": [
       "E2",
       "E9"
@@ -2814,45 +2802,45 @@
    "narrative": "Photograph a room; get back an itemised, priced inventory ready for an insurance claim. He built the two-pass vision pipeline at its core — detect every object, then identify each from a full-resolution crop — and judged fixes against human-labelled photos instead of eyeballing them. Pricing became a parallel retail-search fan-out with LLM ranking and a deterministic median, the AI pipeline moved onto per-upload task workers, and auth moved in phases to a new provider without breaking row-level security. The biggest codebase of the run, end to end: web, mobile, database and model calls.",
    "impact": [
     {
-     "claim": "Two-pass detect-then-identify vision pipeline: on a real claims photo, items found went from 1 to 11.",
+     "claim": "Full inventories from a single photo: on a real claims photo, items found went from 1 to 11 with a detect-then-identify vision pipeline that reads each object from a full-resolution crop.",
      "evidence": [
       "E17"
      ]
     },
     {
-     "claim": "Fixed over-counting under a pre-registered held-out evaluation (33 photos, 146 human-labelled counts): exact-count rate 81% → 83%, over-count 0.53 → 0.43 per photo-run.",
+     "claim": "Counts you can trust, proven on held-out data: exact-count rate 81% → 83% and over-count 0.53 → 0.43 per photo-run, under a pre-registered evaluation of 33 photos and 146 human-labelled counts.",
      "evidence": [
       "E19"
      ]
     },
     {
-     "claim": "Rebuilt pricing as a parallel retail-search fan-out with LLM ranking — projected in the PR at ~5s per item, down from ~60s.",
+     "claim": "Prices in seconds, not a minute: projected in the PR at ~5s per item, down from ~60s, via a parallel retail-search fan-out with LLM ranking and a deterministic median.",
      "evidence": [
       "E12"
      ]
     },
     {
-     "claim": "Moved the AI pipeline to per-upload task workers with retries — projected in the PR to take a 6-photo job from ~9 min sequential to ~3 min parallel.",
+     "claim": "Uploads processed in parallel: projected in the PR to take a 6-photo job from ~9 min to ~3 min with per-upload task workers and retries.",
      "evidence": [
       "E13"
      ]
     },
     {
-     "claim": "Hunted down concurrency bugs found under load: out-of-memory worker kills at queue concurrency 10, and duplicate photos racing through the AI pipeline, now decided atomically under a lock.",
+     "claim": "No more dying workers or double-processed photos under load: out-of-memory kills at queue concurrency 10 fixed, and duplicate photos now decided atomically under a lock.",
      "evidence": [
       "E18",
       "E26"
      ]
     },
     {
-     "claim": "Staged auth migration to Better Auth — web first, then mobile with Apple sign-in — preserving Postgres row-level security via short-lived compatible JWTs.",
+     "claim": "Users moved to a new auth provider with no big-bang cutover: Better Auth on web, then mobile with Apple sign-in, row-level security preserved via short-lived compatible JWTs.",
      "evidence": [
       "E14",
       "E15"
      ]
     },
     {
-     "claim": "Shipped a phone-first five-step capture wizard, a professional review console and a claim-support PDF dossier, rolled into one 45-PR production release.",
+     "claim": "A claim-ready product end to end: phone-first capture wizard, professional review console and a claim-support PDF dossier, shipped in one 45-PR production release.",
      "evidence": [
       "E23",
       "E24",
@@ -2903,33 +2891,33 @@
    "narrative": "Then the same product, rebuilt from the ground up on AWS. Heavy LLM work moved onto an SQS worker pipeline that streams per-stage progress to clients over SSE; Terraform modules stood up web, API and workers on a shared EKS cluster with per-stage Postgres; schema migrations ran as a checksum-ledgered Kubernetes Job before every rollout. An architecture review closed with workers that stay correct under at-least-once delivery.",
    "impact": [
     {
-     "claim": "Moved heavy LLM work onto an async SQS worker pipeline with per-stage events streamed to clients over SSE.",
+     "claim": "Long LLM jobs no longer block requests: heavy work moved onto an async SQS worker pipeline that streams per-stage progress to clients over SSE.",
      "evidence": [
       "E29"
      ]
     },
     {
-     "claim": "Terraform runtime module deploying web, API and SQS workers on a shared EKS platform with ingress routing and per-stage Postgres.",
+     "claim": "Repeatable infrastructure: web, API and workers deployed by Terraform onto a shared EKS platform with ingress routing and per-stage Postgres.",
      "evidence": [
       "E30"
      ]
     },
     {
-     "claim": "Checksum-ledger Postgres migration runner executed as a one-shot Kubernetes Job before rollouts, with pgvector enabled.",
+     "claim": "Schema changes that can't half-apply: a checksum-ledger migration runner executed as a one-shot Kubernetes Job before every rollout.",
      "evidence": [
       "E31"
      ]
     },
     {
-     "claim": "Audit-driven regression suite guarding deploy contracts: env drift, worker boot, readiness probes, smoke tests.",
+     "claim": "Correct under at-least-once delivery: idempotent worker callbacks and a closed worker-to-database back door, across ~25k lines of architecture fixes.",
      "evidence": [
-      "E32"
+      "E33"
      ]
     },
     {
-     "claim": "Architecture fixes across ~25k lines: idempotent at-least-once worker callbacks and a closed worker-to-database back door.",
+     "claim": "Deploys guarded by tests: an audit-driven suite catching env drift, worker boot failures and broken readiness probes.",
      "evidence": [
-      "E33"
+      "E32"
      ]
     }
    ],
@@ -2975,32 +2963,32 @@
    "narrative": "Next problem: feed an organisation's meetings to its AI agents without building a surveillance machine. He built a transcript ingest that denies every meeting by default, a router where each person connects their own account over OAuth and nothing is stored, and a derived knowledge graph — people extracted deterministically, projects and concepts by an LLM with evidence quotes, cached by content hash. When the first users got stuck hand-wiring webhooks, he shipped a one-click chat install and a rules-first routing engine with a durable outbox.",
    "impact": [
     {
-     "claim": "Deny-by-default meeting allowlist: only approved meetings are ever ingested into agent memory.",
+     "claim": "No meeting reaches an agent unless approved: a deny-by-default allowlist in front of transcript ingestion.",
      "evidence": [
       "E36"
      ]
     },
     {
-     "claim": "Per-user meeting routing: OAuth per person, nothing stored, tenants isolated by row-level security.",
+     "claim": "Each person controls their own meeting data: per-user OAuth, nothing stored, tenants isolated by row-level security.",
      "evidence": [
       "E37"
      ]
     },
     {
-     "claim": "Derived knowledge graph of people, projects and concepts with typed relations and evidence quotes, cached by content hash, rendered as a force-directed memory view.",
+     "claim": "Meetings become a queryable knowledge graph: people extracted deterministically, projects and concepts by an LLM with evidence quotes, cached by content hash.",
      "evidence": [
       "E35",
       "E34"
      ]
     },
     {
-     "claim": "Rules-first routing v2 — ordered rule stack, signed webhooks, durable outbox — with 176 tests run against the real tenant boundary.",
+     "claim": "Routing users can actually set up: a rules-first engine with signed webhooks and a durable outbox, backed by 176 tests against the real tenant boundary.",
      "evidence": [
       "E39"
      ]
     },
     {
-     "claim": "One-click Slack install that removed the manual setup step first users were stuck on.",
+     "claim": "Setup that used to stall first users became one click: an OAuth Slack install replacing hand-copied webhook URLs.",
      "evidence": [
       "E40"
      ]
@@ -3051,60 +3039,60 @@
    "narrative": "The latest arc: a multi-tenant platform that provisions a private team of AI agents for each workspace on Kubernetes. He wrote its registration control plane, per-tenant agent rosters, per-agent skill allowlists, owner-approved tasks that agents propose from meetings, and an audited superadmin panel. The hard parts were distributed-systems parts — stale queue messages fenced off with instance and operation IDs, terminal failures that stopped retrying forever, agents hot-added without restarting the gateway. Along the way a fix landed upstream in the open-source agent runtime itself, and on the side he steered an open LLM by pushing two neurons and came full circle with an AI agent for Revit.",
    "impact": [
     {
-     "claim": "Registration control plane for the platform: OAuth plus verified-email auth, rate limits and onboarding (~27k lines, 104 files).",
+     "claim": "Any company can sign up and get its own agent team: a registration control plane with OAuth, verified email, rate limits and onboarding (~27k lines, 104 files).",
      "evidence": [
       "E43"
      ]
     },
     {
-     "claim": "Per-tenant agent rosters with starter packs, replacing a fixed agent list baked into the Helm chart; per-agent skill allowlists on top.",
+     "claim": "Each tenant chooses its agents and what they may do: per-tenant rosters replacing a fixed list baked into the Helm chart, plus per-agent skill allowlists.",
      "evidence": [
       "E48",
       "E53"
      ]
     },
     {
-     "claim": "Fenced stale provisioning messages with instance and operation IDs and stopped retry loops on terminal failures — backed by 394 tests, 110 of them lifecycle cases.",
+     "claim": "Stale queue messages can no longer touch a replacement workspace: provisioning fenced with instance and operation IDs, terminal failures no longer retried forever — backed by 394 tests, 110 of them lifecycle cases.",
      "evidence": [
       "E46",
       "E45"
      ]
     },
     {
-     "claim": "Agents hot-added to a running tenant without a gateway restart; fixed a boot hang that left new tenants waiting ~40 min.",
+     "claim": "No outage to add an agent, no hung new tenants: agents hot-added without a gateway restart, and a boot hang that left new tenants waiting ~40 min fixed.",
      "evidence": [
       "E49",
       "E55"
      ]
     },
     {
-     "claim": "Meeting transcripts routed to the agent each person chooses, with idempotent retries, and agent-proposed tasks that a human approves.",
+     "claim": "Meetings turn into work, with a human in the loop: transcripts routed to the agent each person picks, with idempotent retries, and agent-proposed tasks that the owner approves.",
      "evidence": [
       "E51",
       "E52"
      ]
     },
     {
-     "claim": "Every secret masked until revealed and every reveal audited; superadmin actions audited with race-safe last-admin rules.",
+     "claim": "Secrets stay secret: every value masked until revealed, every reveal and admin action audited.",
      "evidence": [
       "E50",
       "E47"
      ]
     },
     {
-     "claim": "Merged upstream into an open-source agent runtime: a managed coding-CLI runtime bump and regenerated protocol schemas.",
+     "claim": "A fix merged upstream into an open-source agent runtime: managed coding-CLI runtime bump and regenerated protocol schemas.",
      "evidence": [
       "E56"
      ]
     },
     {
-     "claim": "evil-llm (public): a small open LLM steered by pushing two individual neurons, with a live demo and notebook.",
+     "claim": "evil-llm (public): a small open LLM turned by pushing just two neurons, with a live demo and notebook.",
      "evidence": [
       "E59"
      ]
     },
     {
-     "claim": "revit-agentic (public): an AI agent for Autodesk Revit — back to where the story began.",
+     "claim": "revit-agentic (public): an AI agent for Autodesk Revit — back where the story began.",
      "evidence": [
       "E60"
      ]
