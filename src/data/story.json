@@ -7,7 +7,7 @@
   "role": "AI Engineer",
   "githubUrl": "https://github.com/IstiqlalBhat",
   "hook": "AI that sees, listens, and runs other AIs — 412 PRs merged in 9 months.",
-  "subhook": "AI engineer at an AI venture studio. Built: an AI home inventory for insurance claims (vision-detected, AI-priced), a voice AI with long-term memory, and a multi-tenant OS for AI agents — end to end, from the model call down to the Terraform."
+  "subhook": "AI engineer at an AI venture studio who ships production AI end to end: a vision-powered home inventory for insurance claims, a voice assistant with long-term memory, and a multi-tenant platform for AI agents."
  },
  "headline": [
   {
@@ -2655,10 +2655,10 @@
     "end": "2025-12"
    },
    "kicker": "Research roots: a building's carbon footprint, made tamper-proof.",
-   "narrative": "It starts in construction research: material quantities pulled out of Revit BIM models, embodied carbon computed, results written to Ethereum so no one could quietly edit them. When on-chain costs bit, the prototype moved to PostgreSQL — ship the version that works.",
+   "narrative": "It started in construction research: carbon accounting for buildings, with material data pulled from Revit BIM models and the results written to Ethereum so no one could quietly edit them.",
    "impact": [
     {
-     "claim": "Carbon records nobody can quietly edit: Revit BIM material data extracted via pyRevit, embodied carbon computed and written to an Ethereum ledger.",
+     "claim": "Tamper-proof carbon records: embodied carbon computed from Revit BIM material data and written to an Ethereum ledger.",
      "evidence": [
       "E64",
       "E65"
@@ -2679,7 +2679,7 @@
    ],
    "stack": [
     "Python",
-    "pyRevit",
+    "Revit",
     "Solidity",
     "Ethereum"
    ],
@@ -2705,7 +2705,7 @@
     "end": "2026-02"
    },
    "kicker": "After a silent summer, the commit graph lights up with self-directed AI builds.",
-   "narrative": "Nobody assigned any of this. A Graph-RAG chatbot over a raw email archive, run on GPU in a notebook; an LLM parser that turns emailed purchase orders into structured records with duplicate detection; an IoT sensor rig with anomaly detection and a live dashboard; real-time speech experiments; and a public portfolio rebuilt commit by commit. It was practice — and it is exactly the toolkit the next chapter needed.",
+   "narrative": "Nobody assigned any of this: a Graph-RAG chatbot over a raw email archive, an LLM parser for purchase-order emails, an IoT rig with live anomaly detection. It was practice, and exactly the toolkit the next chapter needed.",
    "impact": [
     {
      "claim": "Questions answered over a raw email archive: hybrid retrieval plus a GPU-accelerated Graph-RAG notebook.",
@@ -2775,7 +2775,7 @@
     "end": "2026-05"
    },
    "kicker": "First production role: a voice-first AI assistant with long-term memory.",
-   "narrative": "Joining an AI venture studio, the first hard product was a voice assistant that remembers. He moved its real-time loop from GPT-4o Realtime to Gemini Live, gave it pgvector recall over past sessions, embedded photos together with their AI analysis for multimodal memory, and built an LLM-maintained wiki that compiles conversations into interlinked pages. Then the unglamorous half that makes it real: on-device iOS speech, a microphone that sometimes stayed silent on cold start, and intermittent production not-found errors traced back through server logs.",
+   "narrative": "The first production product: a voice assistant that remembers, moved from GPT-4o Realtime to Gemini Live and given pgvector recall, multimodal memory and an LLM-maintained wiki. Then the unglamorous half that makes it real: on-device iOS speech, a cold-start microphone fix, production errors traced through server logs.",
    "impact": [
     {
      "claim": "Snappier voice replies: audio flush threshold cut from ~1.5s to ~0.3s by moving real-time voice from GPT-4o Realtime to Gemini Live.",
@@ -2795,34 +2795,20 @@
      "evidence": [
       "E7"
      ]
-    },
-    {
-     "claim": "No more silent first sessions on iPhone: native on-device speech-to-text and a cold-start microphone fix that probes for real audio and retries.",
-     "evidence": [
-      "E1",
-      "E8"
-     ]
-    },
-    {
-     "claim": "Existing accounts carried across an auth migration (SimpleJWT to Firebase) with a verified path, and intermittent production 404s root-caused from server logs.",
-     "evidence": [
-      "E2",
-      "E9"
-     ]
     }
    ],
    "metrics": [
     {
-     "value": "689",
-     "label": "commits"
+     "value": "65K+",
+     "label": "lines added"
     },
     {
-     "value": "50",
+     "value": "51",
      "label": "PRs merged"
     },
     {
-     "value": "64K+",
-     "label": "lines added"
+     "value": "689",
+     "label": "commits"
     }
    ],
    "stack": [
@@ -2855,7 +2841,7 @@
     "end": "2026-10"
    },
    "kicker": "The flagship: a computer-vision home-inventory product for insurance claims.",
-   "narrative": "Photograph a room; get back an itemised, priced inventory ready for an insurance claim. He built the two-pass vision pipeline at its core — detect every object, then identify each from a full-resolution crop — and judged fixes against human-labelled photos instead of eyeballing them. Pricing became a parallel retail-search fan-out with LLM ranking, the AI pipeline moved onto per-upload task workers, and auth moved in phases to a new provider without breaking row-level security.",
+   "narrative": "Photograph a room; get back an itemised, priced inventory ready for an insurance claim. He built the two-pass vision pipeline at its core and judged every fix against human-labelled photos, not eyeballs.",
    "impact": [
     {
      "claim": "Full inventories from a single photo: on a real claims photo, items found went from 1 to 11 with a detect-then-identify vision pipeline that reads each object from a full-resolution crop.",
@@ -2874,49 +2860,20 @@
      "evidence": [
       "E12"
      ]
-    },
-    {
-     "claim": "Uploads processed in parallel: projected in the PR to take a 6-photo job from ~9 min to ~3 min with per-upload task workers and retries.",
-     "evidence": [
-      "E13"
-     ]
-    },
-    {
-     "claim": "No more dying workers or double-processed photos under load: out-of-memory kills at queue concurrency 10 fixed, and duplicate photos now decided atomically under a lock.",
-     "evidence": [
-      "E18",
-      "E26"
-     ]
-    },
-    {
-     "claim": "Users moved to a new auth provider with no big-bang cutover: Better Auth on web, then mobile with Apple sign-in, row-level security preserved via short-lived compatible JWTs.",
-     "evidence": [
-      "E14",
-      "E15"
-     ]
-    },
-    {
-     "claim": "A claim-ready product end to end: phone-first capture wizard, professional review console and a claim-support PDF dossier, shipped in one 45-PR production release.",
-     "evidence": [
-      "E23",
-      "E24",
-      "E25",
-      "E28"
-     ]
     }
    ],
    "metrics": [
     {
-     "value": "1,301",
-     "label": "commits"
+     "value": "147K+",
+     "label": "lines added"
     },
     {
      "value": "152",
      "label": "PRs merged"
     },
     {
-     "value": "147K+",
-     "label": "lines added"
+     "value": "1,301",
+     "label": "commits"
     }
    ],
    "stack": [
@@ -2944,8 +2901,14 @@
     "end": "2026-06"
    },
    "kicker": "The same product, re-platformed AWS-native in a single sprint.",
-   "narrative": "Then the same product, rebuilt from the ground up on AWS. Heavy LLM work moved onto an SQS worker pipeline that streams per-stage progress to clients over SSE; Terraform modules stood up web, API and workers on a shared EKS cluster with per-stage Postgres; schema migrations ran as a checksum-ledgered Kubernetes Job before every rollout. An architecture review closed with workers that stay correct under at-least-once delivery.",
+   "narrative": "The same product, rebuilt AWS-native: LLM work on SQS workers streaming progress over SSE, Terraform on a shared EKS cluster, migrations as a Kubernetes Job before every rollout. An architecture review closed with workers that stay correct under at-least-once delivery.",
    "impact": [
+    {
+     "claim": "Correct under at-least-once delivery: idempotent worker callbacks and a closed worker-to-database back door, across ~25k lines of architecture fixes.",
+     "evidence": [
+      "E33"
+     ]
+    },
     {
      "claim": "Long LLM jobs no longer block requests: heavy work moved onto an async SQS worker pipeline that streams per-stage progress to clients over SSE.",
      "evidence": [
@@ -2957,31 +2920,9 @@
      "evidence": [
       "E30"
      ]
-    },
-    {
-     "claim": "Schema changes that can't half-apply: a checksum-ledger migration runner executed as a one-shot Kubernetes Job before every rollout.",
-     "evidence": [
-      "E31"
-     ]
-    },
-    {
-     "claim": "Correct under at-least-once delivery: idempotent worker callbacks and a closed worker-to-database back door, across ~25k lines of architecture fixes.",
-     "evidence": [
-      "E33"
-     ]
-    },
-    {
-     "claim": "Deploys guarded by tests: an audit-driven suite catching env drift, worker boot failures and broken readiness probes.",
-     "evidence": [
-      "E32"
-     ]
     }
    ],
    "metrics": [
-    {
-     "value": "342",
-     "label": "commits"
-    },
     {
      "value": "49",
      "label": "PRs merged"
@@ -2989,6 +2930,10 @@
     {
      "value": "23K+",
      "label": "lines added"
+    },
+    {
+     "value": "342",
+     "label": "commits"
     }
    ],
    "stack": [
@@ -3016,7 +2961,7 @@
     "end": "2026-08"
    },
    "kicker": "Turning meetings into agent memory — without leaking a word.",
-   "narrative": "Next problem: feed an organisation's meetings to its AI agents without building a surveillance machine. He built a transcript ingest that denies every meeting by default, a router where each person connects their own account over OAuth and nothing is stored, and a derived knowledge graph — people extracted deterministically, projects and concepts by an LLM with evidence quotes, cached by content hash. When the first users got stuck hand-wiring webhooks, he shipped a one-click chat install and a rules-first routing engine with a durable outbox.",
+   "narrative": "Feed an organisation's meetings to its AI agents without building a surveillance machine. Deny-by-default ingest, per-person OAuth with nothing stored, and a knowledge graph built from what was said.",
    "impact": [
     {
      "claim": "No meeting reaches an agent unless approved: a deny-by-default allowlist in front of transcript ingestion.",
@@ -3031,30 +2976,13 @@
      ]
     },
     {
-     "claim": "Meetings become a queryable knowledge graph: people extracted deterministically, projects and concepts by an LLM with evidence quotes, cached by content hash.",
-     "evidence": [
-      "E35",
-      "E34"
-     ]
-    },
-    {
      "claim": "Routing users can actually set up: a rules-first engine with signed webhooks and a durable outbox, backed by 176 tests against the real tenant boundary.",
      "evidence": [
       "E39"
      ]
-    },
-    {
-     "claim": "Setup that used to stall first users became one click: an OAuth Slack install replacing hand-copied webhook URLs.",
-     "evidence": [
-      "E40"
-     ]
     }
    ],
    "metrics": [
-    {
-     "value": "360",
-     "label": "commits"
-    },
     {
      "value": "44",
      "label": "PRs merged"
@@ -3062,6 +2990,10 @@
     {
      "value": "44K+",
      "label": "lines added"
+    },
+    {
+     "value": "360",
+     "label": "commits"
     }
    ],
    "stack": [
@@ -3092,19 +3024,12 @@
     "end": "2026-11"
    },
    "kicker": "A multi-tenant platform where every workspace gets its own team of AI agents.",
-   "narrative": "The latest arc: a multi-tenant platform that provisions a private team of AI agents for each workspace on Kubernetes — control plane, per-tenant rosters, skill allowlists, owner-approved tasks, audited admin. The hard parts were distributed-systems parts: stale queue messages fenced with instance and operation IDs, terminal failures that stopped retrying forever, agents hot-added without a gateway restart. On the side, a fix landed upstream in an open-source agent runtime, an open LLM was steered by pushing two neurons, and an AI agent for Revit closed the circle.",
+   "narrative": "A multi-tenant platform that provisions a private team of AI agents for every workspace on Kubernetes: control plane, rosters, skill allowlists, owner-approved tasks. The hard parts were distributed-systems parts, from fencing stale queue messages to hot-adding agents without a gateway restart.",
    "impact": [
     {
      "claim": "Any company can sign up and get its own agent team: a registration control plane with OAuth, verified email, rate limits and onboarding (~27k lines, 104 files).",
      "evidence": [
       "E43"
-     ]
-    },
-    {
-     "claim": "Each tenant chooses its agents and what they may do: per-tenant rosters replacing a fixed list baked into the Helm chart, plus per-agent skill allowlists.",
-     "evidence": [
-      "E48",
-      "E53"
      ]
     },
     {
@@ -3115,50 +3040,13 @@
      ]
     },
     {
-     "claim": "No outage to add an agent, no hung new tenants: agents hot-added without a gateway restart, and a boot hang that left new tenants waiting ~40 min fixed.",
-     "evidence": [
-      "E49",
-      "E55"
-     ]
-    },
-    {
-     "claim": "Meetings turn into work, with a human in the loop: transcripts routed to the agent each person picks, with idempotent retries, and agent-proposed tasks that the owner approves.",
-     "evidence": [
-      "E51",
-      "E52"
-     ]
-    },
-    {
-     "claim": "Secrets stay secret: every value masked until revealed, every reveal and admin action audited.",
-     "evidence": [
-      "E50",
-      "E47"
-     ]
-    },
-    {
      "claim": "A fix merged upstream into an open-source agent runtime: managed coding-CLI runtime bump and regenerated protocol schemas.",
      "evidence": [
       "E56"
      ]
-    },
-    {
-     "claim": "evil-llm (public): a small open LLM turned by pushing just two neurons, with a live demo and notebook.",
-     "evidence": [
-      "E59"
-     ]
-    },
-    {
-     "claim": "revit-agentic (public): an AI agent for Autodesk Revit — back where the story began.",
-     "evidence": [
-      "E60"
-     ]
     }
    ],
    "metrics": [
-    {
-     "value": "128",
-     "label": "commits"
-    },
     {
      "value": "116",
      "label": "PRs merged"
@@ -3166,6 +3054,10 @@
     {
      "value": "129K+",
      "label": "lines added"
+    },
+    {
+     "value": "128",
+     "label": "commits"
     }
    ],
    "stack": [
@@ -3239,7 +3131,7 @@
   }
  ],
  "cta": {
-  "line": "Most of this work lives in private repositories. The code that can be public is one click away.",
+  "line": "Shipping AI that has to work in production? Start with the code.",
   "githubUrl": "https://github.com/IstiqlalBhat"
  }
 }
