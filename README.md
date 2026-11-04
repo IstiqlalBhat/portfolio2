@@ -13,8 +13,8 @@ commit is a point of light placed by date, repos form constellations and chapter
 3. At runtime `src/galaxy.js` (lazy-loaded, only when WebGL2 is available and motion is allowed)
    expands `timeline.days` into points and builds the 3D scene.
 
-Nothing outside `story.json` is content; replace the file and rebuild. `scripts/make-fixture.mjs`
-writes a clearly fake fixture for local development.
+Nothing outside `story.json` is content; replace the file and rebuild. Optional top-level
+`impact` ({title, narrative, points}) renders as a summary section after the hero.
 
 ```sh
 npm ci
@@ -23,4 +23,4 @@ npm run build      # vite build + scripts/size-check.mjs (fails if gzipped JS > 
 npm run preview    # serve dist at /portfolio2/
 ```
 
-Debug: `?q=0|1|2` forces a quality tier. Deployed by `.github/workflows/pages.yml` on push to `main`.
+Deployed by `.github/workflows/pages.yml` on push to `main`.

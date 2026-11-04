@@ -12,8 +12,8 @@
     var d = document.documentElement, ok = false;
     try {
       var rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-      var c = document.createElement('canvas');
-      ok = !rm && !!(window.WebGL2RenderingContext && c.getContext('webgl2'));
+      // cheap capability check only; the real context is created once, later, on the page canvas
+      ok = !rm && 'WebGL2RenderingContext' in window;
     } catch (e) { ok = false; }
     d.className = ok ? 'webgl' : 'static';
   })();

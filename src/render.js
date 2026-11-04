@@ -90,7 +90,7 @@ function yearTicks(story) {
   let out = '';
   for (let y = y0; y <= y1; y++) {
     const x = ((Date.UTC(y, 0, 1) - t0) / 86400000 / span) * 100;
-    if (x < -1 || x > 101) continue;
+    if (x > 101 || (x < -1 && y !== y0)) continue;
     out += `<span class="tick" style="left:${Math.max(0, x).toFixed(2)}%">${y}</span>`;
   }
   return out;
@@ -132,25 +132,39 @@ export function renderBody(story) {
     }).join('');
     const more = repos.length > 8 ? `<li class="more"><span>+${repos.length - 8} more</span></li>` : '';
     return `
-<section class="step chapter" id="ch-${esc(c.id)}" data-step="${i + 1}" style="--c:${esc(c.color)}" aria-labelledby="h-${esc(c.id)}">
+<section class="step chapter" id="ch-${esc(c.id)}" data-kind="chapter" data-ch="${i}" style="--c:${esc(c.color)}" aria-labelledby="h-${esc(c.id)}">
   <article class="panel">
     <p class="ch-meta"><span class="ch-num">${String(i + 1).padStart(2, '0')}<i>/${String(chapters.length).padStart(2, '0')}</i></span><span class="period">${fmtYM(c.period?.start)} — ${fmtYM(c.period?.end)}</span></p>
     <h2 id="h-${esc(c.id)}">${esc(c.title)}</h2>
     <p class="kicker">${esc(c.kicker)}</p>
     <p class="narrative">${esc(c.narrative)}</p>
     ${(c.metrics || []).length ? `<dl class="metrics">${c.metrics.map((m) => `<div><dd>${esc(m.value)}</dd><dt>${esc(m.label)}</dt></div>`).join('')}</dl>` : ''}
-    ${(c.impact || []).length ? `<h3 class="sub">Impact</h3><ul class="impact">${c.impact.map((m) => `<li>${esc(m.claim)}</li>`).join('')}</ul>` : ''}
+    ${(c.impact || []).length ? `<h3 class="sub">Impact</h3><ul class="impact">${c.impact.slice(0, 4).map((m) => `<li>${esc(m.claim)}</li>`).join('')}</ul>` : ''}
+    ${(c.impact || []).length > 4 ? `<details class="more"><summary>${c.impact.length - 4} more shipped</summary><ul class="impact">${c.impact.slice(4).map((m) => `<li>${esc(m.claim)}</li>`).join('')}</ul></details>` : ''}
     ${(c.stack || []).length ? `<ul class="chips" aria-label="Stack">${c.stack.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
     ${repoList ? `<details class="repos"><summary>Constellation · ${repos.length} repo${repos.length === 1 ? '' : 's'}</summary><ul>${repoList}${more}</ul></details>` : ''}
   </article>
 </section>`;
   }).join('');
 
+  const im = story.impact;
+  const impactHtml = im && (im.title || im.narrative || (im.points || []).length) ? `
+<section class="step impact-sec" id="impact" data-kind="impact" aria-labelledby="impact-h">
+  <div class="impact-inner">
+    <p class="eyebrow"><span class="dot"></span>The short version</p>
+    ${im.title ? `<h2 id="impact-h">${esc(im.title)}</h2>` : ''}
+    ${im.narrative ? `<p class="impact-narr">${esc(im.narrative)}</p>` : ''}
+    ${(im.points || []).length ? `<ol class="impact-points">${im.points.map((pt, i) => `<li><span class="ix">${String(i + 1).padStart(2, '0')}</span><p>${esc(pt.claim)}</p></li>`).join('')}</ol>` : ''}
+  </div>
+</section>` : '';
+
   const markers = chapters.map((c, i) => {
     const s = parseYM(c.period?.start);
     const x = s == null ? (i / Math.max(1, chapters.length)) * 100 : Math.min(100, Math.max(0, ((s - t0) / 86400000 / span) * 100));
-    return `<a class="mark" href="#ch-${esc(c.id)}" data-step="${i + 1}" style="left:${x.toFixed(2)}%;--c:${esc(c.color)}" aria-label="Chapter ${i + 1}: ${esc(c.title)}"><span>${String(i + 1).padStart(2, '0')}</span></a>`;
+    return `<span class="mark" data-ch="${i}" style="left:${x.toFixed(2)}%;--c:${esc(c.color)}" aria-hidden="true"></span>`;
   }).join('');
+  const chapterBtns = chapters.map((c, i) =>
+    `<a class="cbtn" href="#ch-${esc(c.id)}" data-ch="${i}" style="--c:${esc(c.color)}" aria-label="Chapter ${i + 1}: ${esc(c.title)}">${i + 1}</a>`).join('');
 
   const skills = (story.skills || []).slice(0, 14).map((s) =>
     `<li style="--w:${Math.max(0, Math.min(1, +s.weight || 0)).toFixed(2)}">${esc(s.name)}</li>`).join('');
@@ -160,16 +174,17 @@ export function renderBody(story) {
 <div class="scrim" aria-hidden="true"></div>
 <div id="labels" aria-hidden="true"></div>
 <nav class="scrubber" aria-label="Timeline">
-  <div class="scrub-head"><span class="scrub-date" id="scrub-date">${esc(fmtDate(t0))}</span><span class="scrub-title" id="scrub-title">${esc(p.name)}</span></div>
+  <div class="scrub-head"><span class="scrub-date" id="scrub-date">${esc(fmtDate(t0))}</span><span class="scrub-title" id="scrub-title">${esc(p.name)}</span><span class="cbtns">${chapterBtns}</span></div>
   <div class="scrub-track">
     ${activitySvg(story, { height: 28, cls: 'scrub-svg', markers: false })}
     <div class="scrub-ticks">${yearTicks(story)}</div>
     ${markers}
+    <div class="scrub-range" id="scrub-range"></div>
     <div class="playhead" id="playhead"></div>
   </div>
 </nav>
 <main id="story">
-  <section class="step hero" data-step="0" aria-labelledby="name">
+  <section class="step hero" data-kind="hero" aria-labelledby="name">
     <div class="hero-inner">
       <p class="eyebrow"><span class="dot"></span>${esc(p.role)}${p.handle ? ` <span class="sep">/</span> <span class="handle">@${esc(p.handle)}</span>` : ''}</p>
       <h1 id="name">${esc(p.name)}</h1>
@@ -180,8 +195,9 @@ export function renderBody(story) {
       <p class="cue"><span class="cue-line"></span><span>Scroll through time · every point of light is a commit</span></p>
     </div>
   </section>
+  ${impactHtml}
   ${chapterHtml}
-  <section class="step cta" id="contact" data-step="${chapters.length + 1}" aria-labelledby="cta-h">
+  <section class="step cta" id="contact" data-kind="cta" aria-labelledby="cta-h">
     <div class="cta-inner">
       <p class="eyebrow"><span class="dot"></span>${esc(fmtDate(t0))} — ${esc(fmtDate(timeBounds(story).t1))}</p>
       <h2 id="cta-h">${esc(story.cta?.line)}</h2>

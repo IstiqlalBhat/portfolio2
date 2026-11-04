@@ -3,10 +3,17 @@
 // driven by scroll. Single Points draw for commits, procedural only.
 import {
   WebGLRenderer, Scene, PerspectiveCamera, BufferGeometry, BufferAttribute, Points,
-  ShaderMaterial, LineSegments, LineBasicMaterial, AdditiveBlending, Color, Vector3, Group,
+  ShaderMaterial, LineSegments, AdditiveBlending, Color, Vector3, Group,
 } from 'three';
 import story from './data/story.json';
 import { chapterIndex, timeBounds, fmtDate } from './render.js';
+
+// cooperative yielding so building the scene never blocks the main thread for long
+let sliceStart = 0;
+const yieldNow = () => new Promise((r) => {
+  if (globalThis.scheduler?.yield) globalThis.scheduler.yield().then(r); else setTimeout(r, 0);
+}).then(() => { sliceStart = performance.now(); });
+const maybeYield = () => (performance.now() - sliceStart > 8 ? yieldNow() : null);
 
 const MAXW = 9; // chapter weight slots (<=7 chapters + "other")
 const hash = (n) => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -14,12 +21,16 @@ const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const smooth = (x) => x * x * (3 - 2 * x);
 const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
 
+// Test hook only: a localStorage key (never set for normal visitors) pins a tier.
+function devTier() {
+  try { const v = localStorage.getItem('p2-dev-tier'); return v === '0' || v === '1' || v === '2' ? +v : -1; } catch { return -1; }
+}
 function qualityTier() {
   const cores = navigator.hardwareConcurrency || 4;
   const mem = navigator.deviceMemory || 8;
   const small = Math.min(screen.width, screen.height) < 520;
-  const forced = /[?&]q=([012])/.exec(location.search);
-  if (forced) return +forced[1];
+  const forced = devTier();
+  if (forced >= 0) return forced;
   if (cores <= 2 || mem <= 2) return 0;
   return small || cores <= 4 ? 1 : 2;
 }
@@ -30,7 +41,8 @@ const TIERS = [
 ];
 
 const commitVert = /* glsl */ `
-uniform float uTime, uReveal, uNow, uScale, uPR;
+uniform float uTime, uReveal, uNow, uScale, uPR, uPulseR, uPulseA, uPulseCh;
+uniform vec3 uPulseC;
 uniform float uW[${MAXW}];
 attribute vec3 aColor;
 attribute float aT, aSize, aChap, aSeed;
@@ -45,14 +57,53 @@ void main() {
   float tw = 0.72 + 0.28 * sin(uTime * (0.8 + aSeed * 2.6) + aSeed * 61.0);
   float s = aSize * uScale / max(0.1, -mv.z) * (1.0 + 1.6 * front) * (0.55 + 0.45 * w);
   float a = rev * future * tw * w;
+  // arrival pulse: a shock-wave ring sweeping through the focused chapter's stars
+  float same = 1.0 - step(0.5, abs(aChap - uPulseCh));
+  float pd = distance(position, uPulseC) - uPulseR;
+  float pulse = uPulseA * same * (exp(-pd * pd * 0.12) + 0.35);
+  s *= 1.0 + 1.3 * pulse;
+  a *= 1.0 + 2.2 * pulse;
   // keep sub-pixel points stable: never shrink below 2px, fade instead
   float ps = max(s, 2.6 * uPR);
   a *= min(1.0, s / (2.6 * uPR));
   gl_PointSize = min(ps, 30.0 * uPR);
   vAlpha = a * (1.0 + 2.0 * front);
-  vColor = mix(aColor, vec3(1.0), 0.18 + 0.5 * front);
+  vColor = mix(aColor, vec3(1.0), min(1.0, 0.18 + 0.5 * front + 0.45 * pulse));
   gl_Position = projectionMatrix * mv;
 }`;
+const lineVert = /* glsl */ `
+attribute vec3 aFrom;
+attribute float aOrd, aEnd;
+uniform float uDraw;
+void main() {
+  float k = clamp((uDraw - aOrd) * 3.0, 0.0, 1.0);
+  vec3 p = aEnd > 0.5 ? mix(aFrom, position, k) : position;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+}`;
+const lineFrag = /* glsl */ `
+uniform vec3 uColor;
+uniform float uOpacity;
+void main() { gl_FragColor = vec4(uColor * uOpacity, 1.0); }`;
+
+const ringVert = /* glsl */ `
+uniform float uScale, uSize;
+void main() {
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_PointSize = min(uSize * uScale / max(0.1, -mv.z), 2048.0);
+  gl_Position = projectionMatrix * mv;
+}`;
+const ringFrag = /* glsl */ `
+uniform vec3 uColor;
+uniform float uP;
+void main() {
+  float d = length(gl_PointCoord - 0.5) * 2.0;
+  float r = 0.15 + 0.85 * uP;
+  float ring = exp(-pow((d - r) * 16.0, 2.0)) + 0.35 * exp(-pow((d - r * 0.82) * 9.0, 2.0));
+  float a = ring * (1.0 - uP) * (1.0 - smoothstep(0.96, 1.0, d));
+  if (a < 0.003) discard;
+  gl_FragColor = vec4((uColor + vec3(0.25)) * a * 1.4, 1.0);
+}`;
+
 const commitFrag = /* glsl */ `
 varying vec3 vColor;
 varying float vAlpha;
@@ -91,7 +142,8 @@ void main() {
   gl_FragColor = vec4(vColor * a, 1.0);
 }`;
 
-export function start({ onFail }) {
+export async function start({ onFail }) {
+  await yieldNow();
   const canvas = document.getElementById('gl');
   let renderer;
   try {
@@ -100,6 +152,7 @@ export function start({ onFail }) {
     onFail(e);
     return;
   }
+  await yieldNow();
   let tier = qualityTier();
   let Q = TIERS[tier];
   renderer.setClearColor(0x04050a, 1);
@@ -112,7 +165,7 @@ export function start({ onFail }) {
   const chapSlot = (ci) => Math.min(ci, MAXW - 1);
 
   // ---------- layout: spiral arm through time ----------
-  const TURNS = 1.25, R0 = 3, R1 = 40;
+  const TURNS = 1.25, R0 = 4, R1 = 34;
   const tmp = new Vector3();
   function arm(t, out) {
     const th = 0.9 + t * TURNS * Math.PI * 2;
@@ -120,14 +173,28 @@ export function start({ onFail }) {
     out.set(Math.cos(th) * r, (t - 0.5) * 7 + Math.sin(th * 2.0) * 1.2, Math.sin(th) * r);
     return th;
   }
+  // chapters that overlap in time get their own band beside the arm
   function lane(repoId, th, out) {
-    const lr = (hash(repoId * 3 + 1) - 0.5) * 9;
-    const ly = (hash(repoId * 3 + 2) - 0.5) * 5;
+    const ci = repoChap.has(repoId) ? repoChap.get(repoId) : -1;
+    const bandR = ci < 0 ? 0 : ((ci % 3) - 1) * 6.5;
+    const bandY = ci < 0 ? 0 : ((ci % 2) * 2 - 1) * 2.2;
+    const lr = bandR + (hash(repoId * 3 + 1) - 0.5) * 5;
+    const ly = bandY + (hash(repoId * 3 + 2) - 0.5) * 3;
     out.set(Math.cos(th) * lr, ly, Math.sin(th) * lr);
     return out;
   }
 
   const days = story.timeline?.days || [];
+  // position warp: blend linear time with the commit CDF so dense periods get room
+  const cdf = new Float32Array(Math.ceil(span) + 2);
+  for (const [day, , n] of days) cdf[clamp(Math.floor(day), 0, cdf.length - 1)] += n;
+  for (let i = 1; i < cdf.length; i++) cdf[i] += cdf[i - 1];
+  const cdfMax = cdf[cdf.length - 1] || 1;
+  const warp = (t) => {
+    const x = clamp(t, 0, 1) * (cdf.length - 2), i = Math.floor(x), f = x - i;
+    const c = (cdf[i] + (cdf[i + 1] - cdf[i]) * f) / cdfMax;
+    return 0.6 * t + 0.4 * c;
+  };
   const totalCommits = days.reduce((s, d) => s + (d[2] || 0), 0);
   const ratio = Math.min(1, Q.maxPoints / Math.max(1, totalCommits));
 
@@ -142,7 +209,7 @@ export function start({ onFail }) {
   for (const [id, s] of repoStat) {
     const mt = s.sum / s.n;
     const c = new Vector3();
-    const th = arm(mt, c);
+    const th = arm(warp(mt), c);
     c.add(lane(id, th, tmp));
     repoCenter.set(id, c);
   }
@@ -161,6 +228,7 @@ export function start({ onFail }) {
   const white = new Color(1, 1, 1);
   const cc = new Color();
   for (let r = 0; r < days.length; r++) {
+    if (maybeYield()) await yieldNow();
     const [day, repo, n] = days[r];
     const emit = Math.max(1, Math.round(n * ratio));
     const boost = Math.sqrt(n / emit);
@@ -169,12 +237,12 @@ export function start({ onFail }) {
     for (let j = 0; j < emit; j++) {
       const seed = hash(r * 13.37 + j * 7.1 + 0.5);
       const t = clamp((day + seed * 0.95) / span, 0, 1);
-      const th = arm(t, base);
+      const th = arm(warp(clamp((day + 0.5) / span, 0, 1)), base);
       base.add(lane(repo, th, ln));
-      base.lerp(center, 0.42);
-      const g = () => (hash(k * 3.1 + seed * 91 + 1) + hash(k * 5.7 + seed * 13 + 2) + hash(k * 1.3 + seed * 47 + 3) - 1.5);
-      const sigma = 0.75 + 0.25 * Math.log2(1 + n);
-      base.x += g() * sigma; base.y += g() * sigma * 0.6; base.z += g() * sigma;
+      base.lerp(center, 0.55);
+      const g = (ax) => (hash(k * 3.1 + seed * 91 + ax * 17.3 + 1) + hash(k * 5.7 + seed * 13 + ax * 29.1 + 2) + hash(k * 1.3 + seed * 47 + ax * 41.7 + 3) - 1.5);
+      const sigma = (1.1 + 0.3 * Math.log2(1 + n)) * (1 + 0.4 * Math.log10(1 + (repoStat.get(repo)?.n || 1)));
+      base.x += g(1) * sigma; base.y += g(2) * sigma * 0.6; base.z += g(3) * sigma;
       pos.set([base.x, base.y, base.z], k * 3);
       cc.copy(ci < NC ? chapColor[ci] : otherColor).lerp(white, hash(k + 0.31) * 0.35);
       col.set([cc.r, cc.g, cc.b], k * 3);
@@ -215,6 +283,7 @@ export function start({ onFail }) {
   const uniforms = {
     uTime: { value: 0 }, uReveal: { value: 0 }, uNow: { value: 1 }, uScale: { value: 400 },
     uPR: { value: 1 }, uW: { value: W },
+    uPulseC: { value: new Vector3() }, uPulseR: { value: 0 }, uPulseA: { value: 0 }, uPulseCh: { value: -5 },
   };
   const commitMat = new ShaderMaterial({
     uniforms, vertexShader: commitVert, fragmentShader: commitFrag,
@@ -229,6 +298,7 @@ export function start({ onFail }) {
 
   // ---------- constellation lines (MST of repo centroids per chapter) ----------
   const lineMats = [];
+  await yieldNow();
   chapters.forEach((c, ci) => {
     const nodes = [...repoNode.entries()].filter(([id]) => repoChap.get(id) === ci).map(([, v]) => v);
     if (nodes.length < 2) { lineMats.push(null); return; }
@@ -242,18 +312,47 @@ export function start({ onFail }) {
       seg.push(nodes[from[bi]], nodes[bi]);
       nodes.forEach((v, i) => { if (!inTree.includes(i)) { const d = v.distanceTo(nodes[bi]); if (d < best[i]) { best[i] = d; from[i] = bi; } } });
     }
-    const lg = new BufferGeometry().setFromPoints(seg);
-    const lm = new LineBasicMaterial({ color: chapColor[ci], transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false, depthTest: false });
+    const nv = seg.length, lp = new Float32Array(nv * 3), lf = new Float32Array(nv * 3), lo = new Float32Array(nv), le = new Float32Array(nv);
+    const nSeg = nv / 2;
+    for (let i = 0; i < nv; i++) {
+      const sIdx = i >> 1, from = seg[sIdx * 2];
+      lp.set([seg[i].x, seg[i].y, seg[i].z], i * 3);
+      lf.set([from.x, from.y, from.z], i * 3);
+      lo[i] = (sIdx / Math.max(1, nSeg)) * 0.667;
+      le[i] = i & 1;
+    }
+    const lg = new BufferGeometry();
+    lg.setAttribute('position', new BufferAttribute(lp, 3));
+    lg.setAttribute('aFrom', new BufferAttribute(lf, 3));
+    lg.setAttribute('aOrd', new BufferAttribute(lo, 1));
+    lg.setAttribute('aEnd', new BufferAttribute(le, 1));
+    const lm = new ShaderMaterial({
+      uniforms: { uColor: { value: chapColor[ci] }, uOpacity: { value: 0 }, uDraw: { value: 1 } },
+      vertexShader: lineVert, fragmentShader: lineFrag,
+      transparent: true, blending: AdditiveBlending, depthWrite: false, depthTest: false,
+    });
     const ls = new LineSegments(lg, lm);
     ls.frustumCulled = false;
     galaxy.add(ls);
     lineMats.push(lm);
   });
 
+  // ---------- arrival shockwave (single sprite) ----------
+  const ringU = { uScale: uniforms.uScale, uSize: { value: 40 }, uColor: { value: new Color() }, uP: { value: 1 } };
+  const ringGeo = new BufferGeometry();
+  ringGeo.setAttribute('position', new BufferAttribute(new Float32Array(3), 3));
+  const ring = new Points(ringGeo, new ShaderMaterial({
+    uniforms: ringU, vertexShader: ringVert, fragmentShader: ringFrag,
+    transparent: true, blending: AdditiveBlending, depthWrite: false, depthTest: false,
+  }));
+  ring.frustumCulled = false;
+  ring.visible = false;
+  galaxy.add(ring);
+
   // ---------- background stars + nebula ----------
-  function softPoints(n, fill, world, alpha) {
+  async function softPoints(n, fill, world, alpha) {
     const p = new Float32Array(n * 3), c = new Float32Array(n * 3), s = new Float32Array(n), sd = new Float32Array(n);
-    for (let i = 0; i < n; i++) fill(i, p, c, s, sd);
+    for (let i = 0; i < n; i++) { if ((i & 255) === 0 && maybeYield()) await yieldNow(); fill(i, p, c, s, sd); }
     const g = new BufferGeometry();
     g.setAttribute('position', new BufferAttribute(p, 3));
     g.setAttribute('aColor', new BufferAttribute(c, 3));
@@ -267,7 +366,7 @@ export function start({ onFail }) {
     pts.frustumCulled = false;
     return pts;
   }
-  const stars = softPoints(Q.stars, (i, p, c, s, sd) => {
+  const stars = await softPoints(Q.stars, (i, p, c, s, sd) => {
     const u = hash(i * 1.1 + 5) * 2 - 1, a = hash(i * 2.3 + 9) * Math.PI * 2, r = 160 + hash(i * 3.7) * 180;
     const q = Math.sqrt(1 - u * u);
     p.set([Math.cos(a) * q * r, u * r, Math.sin(a) * q * r], i * 3);
@@ -278,14 +377,15 @@ export function start({ onFail }) {
   }, false, 0.75);
   scene.add(stars);
   // galactic dust: faint non-commit particles tracing the spiral arms (structure only)
-  const dust = softPoints(Q.dust, (i, p, c, s, sd) => {
+  const dust = await softPoints(Q.dust, (i, p, c, s, sd) => {
     const t = Math.pow(hash(i * 0.913 + 4.2), 0.9);
     const th = arm(t, tmp);
     const spread = 2 + t * 7;
-    const g = () => hash(i * 2.17 + 1) + hash(i * 3.31 + 2) + hash(i * 5.03 + 3) - 1.5;
+    const g = (ax) => hash(i * 2.17 + ax * 13.1 + 1) + hash(i * 3.31 + ax * 23.7 + 2) + hash(i * 5.03 + ax * 37.9 + 3) - 1.5;
     const mirror = hash(i * 7.7) < 0.35; // a fainter second arm
     if (mirror) { tmp.x = -tmp.x; tmp.z = -tmp.z; }
-    tmp.x += Math.cos(th) * g() * spread; tmp.z += Math.sin(th) * g() * spread; tmp.y += g() * (1 + t * 2);
+    const gr = g(1) * spread, gt = g(2) * spread * 0.6;
+    tmp.x += Math.cos(th) * gr - Math.sin(th) * gt; tmp.z += Math.sin(th) * gr + Math.cos(th) * gt; tmp.y += g(3) * (1 + t * 2);
     p.set([tmp.x, tmp.y, tmp.z], i * 3);
     const warm = 1 - t;
     c.set([0.55 + warm * 0.35, 0.6 + warm * 0.2, 0.85 - warm * 0.15].map((v) => v * (mirror ? 0.6 : 1)), i * 3);
@@ -295,13 +395,13 @@ export function start({ onFail }) {
   galaxy.add(dust);
   let nebula = null;
   if (NC > 0) {
-    nebula = softPoints(Q.nebula + 12, (i, p, c, s, sd) => {
+    nebula = await softPoints(Q.nebula + 12, (i, p, c, s, sd) => {
       if (i < 12) { // warm core
         p.set([(hash(i) - 0.5) * 4, (hash(i + 3) - 0.5) * 2, (hash(i + 7) - 0.5) * 4], i * 3);
         c.set([1.6, 1.2, 0.9], i * 3); s[i] = 7 + hash(i + 1) * 10; sd[i] = 0; return;
       }
       const t = hash(i * 1.7 + 0.2);
-      const th = arm(t, tmp);
+      const th = arm(warp(t), tmp);
       tmp.x += (hash(i * 2.9) - 0.5) * 10; tmp.y += (hash(i * 3.3) - 0.5) * 4; tmp.z += (hash(i * 4.1) - 0.5) * 10;
       void th;
       p.set([tmp.x, tmp.y, tmp.z], i * 3);
@@ -316,6 +416,7 @@ export function start({ onFail }) {
     galaxy.add(nebula);
   }
 
+  await yieldNow();
   // ---------- camera keyframes ----------
   const camera = new PerspectiveCamera(50, 1, 0.5, 900);
   const chapEndT0 = (ci) => (ci + 0.5) / Math.max(1, NC);
@@ -327,12 +428,21 @@ export function start({ onFail }) {
     if (a.pts.length) rad = Math.sqrt(a.pts.reduce((s, p) => s + p.distanceToSquared(c), 0) / a.pts.length);
     return { c, rad };
   });
+  const ymT = (str, end) => {
+    const m = /^(\d{4})-(\d{2})/.exec(str || '');
+    if (!m) return null;
+    return clamp(((end ? Date.UTC(+m[1], +m[2], 0) : Date.UTC(+m[1], +m[2] - 1, 1)) - t0) / 86400000 / span, 0, 1);
+  };
+  const chapStartT = chapters.map((c, ci) => ymT(c.period?.start, false) ?? ci / Math.max(1, NC));
   const chapEndT = chapters.map((c) => {
     const m = /^(\d{4})-(\d{2})/.exec(c.period?.end || '');
     if (!m) return 1;
     return clamp((Date.UTC(+m[1], +m[2], 0) - t0) / 86400000 / span, 0.02, 1);
   });
 
+  const steps = [...document.querySelectorAll('.step')];
+  const stepKind = steps.map((el) => el.dataset.kind || 'chapter');
+  const stepCh = steps.map((el) => (el.dataset.ch != null && chapters[+el.dataset.ch] ? +el.dataset.ch : -1));
   let mobile = false;
   const keys = []; // {pos, look, ox, oy, t}
   function buildKeys() {
@@ -340,7 +450,10 @@ export function start({ onFail }) {
     const aspect = window.innerWidth / Math.max(1, window.innerHeight);
     mobile = aspect < 0.9;
     const fit = mobile ? 1.55 / Math.max(0.45, aspect) * 0.62 : 1;
-    keys.push({ pos: new Vector3(0, 60, 52).multiplyScalar(fit * (mobile ? 1 : 1.08)), look: new Vector3(0, -2, 0), ox: mobile ? 0 : 0.19, oy: mobile ? -0.28 : 0, t: 1 });
+    const hero = { pos: new Vector3(0, 60, 52).multiplyScalar(fit * (mobile ? 1.05 : 1.2)), look: new Vector3(0, -2, 0), ox: mobile ? 0 : 0.17, oy: mobile ? -0.2 : 0, t: 1, show: 1 };
+    const impact = { pos: new Vector3(46, 22, -40).multiplyScalar(fit * (mobile ? 0.9 : 0.95)), look: new Vector3(0, 0, 0), ox: mobile ? 0 : 0.24, oy: mobile ? -0.3 : 0, t: 1, show: 1 };
+    const cta = { pos: new Vector3(-10, -26, 74).multiplyScalar(mobile ? 1.5 : 1.05), look: new Vector3(0, 2, 0), ox: 0, oy: mobile ? -0.06 : -0.04, t: 1, show: 1 };
+    const chapKeys = [];
     chapters.forEach((c, ci) => {
       const { c: ctr, rad } = chapInfo[ci];
       const radial = new Vector3(ctr.x, 0, ctr.z);
@@ -348,40 +461,60 @@ export function start({ onFail }) {
       radial.normalize();
       const tang = new Vector3(-radial.z, 0, radial.x);
       const dir = radial.clone().multiplyScalar(0.55).add(new Vector3(0, 0.62, 0)).add(tang.multiplyScalar(ci % 2 ? 0.45 : -0.45)).normalize();
-      const D = (rad * 2.6 + 14) * (mobile ? 1.45 : 1);
-      keys.push({ pos: ctr.clone().add(dir.multiplyScalar(D)), look: ctr.clone(), ox: mobile ? 0 : 0.22, oy: mobile ? -0.24 : 0, t: chapEndT[ci] });
+      const D = (rad * 2.6 + 14) * (mobile ? 1.75 : 1.12);
+      chapKeys.push({ pos: ctr.clone().add(dir.multiplyScalar(D)), look: ctr.clone(), ox: mobile ? 0 : 0.22, oy: mobile ? -0.26 : 0, t: chapEndT[ci], show: (Math.min(chapStartT[ci], chapEndT[ci]) + chapEndT[ci]) / 2 });
     });
-    keys.push({ pos: new Vector3(-10, -26, 74).multiplyScalar(mobile ? 1.5 : 1.05), look: new Vector3(0, 2, 0), ox: 0, oy: mobile ? -0.06 : -0.04, t: 1 });
+    steps.forEach((el, i) => {
+      const k = stepKind[i];
+      keys.push(k === 'hero' ? hero : k === 'impact' ? impact : k === 'cta' ? cta : chapKeys[stepCh[i]] || hero);
+    });
   }
 
   // ---------- scroll mapping ----------
-  const steps = [...document.querySelectorAll('.step')];
-  let anchors = [];
+  let holds = [];
+  let panelRight = 0;
   function measure() {
     const vh = window.innerHeight;
+    const pr = document.querySelector('.chapter .panel')?.getBoundingClientRect();
+    panelRight = !mobile && pr ? pr.right + 8 : 0;
     const maxS = Math.max(1, document.documentElement.scrollHeight - vh);
-    anchors = steps.map((el, i) => {
-      if (i === 0) return 0;
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      return Math.min(maxS, Math.max(0, top - vh * (mobile ? 0.05 : 0.2)));
+    // each step holds the camera while its panel is read, and the flight happens in the gap
+    holds = steps.map((el, i) => {
+      const r = el.getBoundingClientRect();
+      const top = r.top + window.scrollY, bottom = r.bottom + window.scrollY;
+      const hs = i === 0 ? 0 : Math.min(maxS, Math.max(0, top - vh * (mobile ? 0.05 : 0.2)));
+      const he = i === 0 ? 0 : Math.min(maxS, Math.max(hs, bottom - vh * 0.92));
+      return [hs, he];
     });
-    for (let i = 1; i < anchors.length; i++) anchors[i] = Math.max(anchors[i], anchors[i - 1] + 1);
+    for (let i = 1; i < holds.length; i++) {
+      holds[i][0] = Math.max(holds[i][0], holds[i - 1][1] + 1);
+      holds[i][1] = Math.max(holds[i][1], holds[i][0]);
+    }
   }
   function progress() {
     const y = window.scrollY;
-    if (y <= anchors[0]) return 0;
-    for (let i = 1; i < anchors.length; i++) {
-      if (y < anchors[i]) return i - 1 + (y - anchors[i - 1]) / (anchors[i] - anchors[i - 1]);
+    for (let i = 0; i < holds.length; i++) {
+      const [hs, he] = holds[i];
+      if (y <= he) return y >= hs || i === 0 ? i : i - 1 + (y - holds[i - 1][1]) / Math.max(1, hs - holds[i - 1][1]);
     }
-    return anchors.length - 1;
+    return holds.length - 1;
   }
 
   // ---------- DOM hooks ----------
   const playhead = document.getElementById('playhead');
   const scrubDate = document.getElementById('scrub-date');
   const scrubTitle = document.getElementById('scrub-title');
-  const marks = [...document.querySelectorAll('.scrubber .mark')];
+  const marks = [...document.querySelectorAll('.scrubber [data-ch]')];
+  const range = document.getElementById('scrub-range');
+  const fadeSecs = [...document.querySelectorAll('.chapter, .impact-sec')];
+  let lastDate = '', lastRange = -2, trackW = 0, lastNum = 0;
+  const periodTxt = chapters.map((c) => {
+    const f = (str) => { const m = /^(\d{4})-(\d{2})/.exec(str || ''); return m ? fmtDate(Date.UTC(+m[1], +m[2] - 1, 1)) : ''; };
+    const a = f(c.period?.start), b = f(c.period?.end);
+    return a === b ? a : `${a} – ${b}`;
+  });
   const labelsEl = document.getElementById('labels');
+  const placed = [];
   const repoById = new Map((story.repos || []).map((r) => [r.id, r]));
   const labelSets = chapters.map((c, ci) => {
     const ids = [...repoNode.keys()].filter((id) => repoChap.get(id) === ci)
@@ -390,14 +523,18 @@ export function start({ onFail }) {
       const el = document.createElement('span');
       el.className = 'lbl';
       el.style.setProperty('--c', c.color || '#fff');
-      const t = String(repoById.get(id)?.label ?? '');
-      el.textContent = t.length > 30 ? t.slice(0, 29) + '…' : t;
+      const r = repoById.get(id);
+      let t = String(r?.label ?? '').replace(/^Private\s*·\s*/, '');
+      if (t.length > 30) t = t.slice(0, 29) + '…';
+      el.textContent = t;
+      if (r && !r.public) el.classList.add('priv');
       el.dataset.rank = rank;
       labelsEl.appendChild(el);
-      return { el, id, rank };
+      return { el, id, rank, w: 14 + t.length * 6.7 };
     });
   });
 
+  await yieldNow();
   // hero count-up
   const nums = [...document.querySelectorAll('.hero .num')].map((el) => {
     const m = /^([^\d]*)([\d,]*\.?\d+)(.*)$/.exec(el.dataset.value || '');
@@ -408,8 +545,10 @@ export function start({ onFail }) {
   const fmtNum = (n, d, comma) => comma ? n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : n.toFixed(d);
 
   // reveal-on-enter panels
-  const io = new IntersectionObserver((ents) => ents.forEach((e) => { if (e.isIntersecting) e.target.classList.add('in'); }), { threshold: 0.12 });
-  document.querySelectorAll('.panel, .cta-inner').forEach((el) => io.observe(el));
+  const io = new IntersectionObserver((ents) => ents.forEach((e) => { if (e.isIntersecting) e.target.classList.remove('pre'); }), { threshold: 0.12 });
+  const revealEls = [...document.querySelectorAll('.panel, .cta-inner, .impact-inner')];
+  revealEls.forEach((el) => io.observe(el));
+  const scrubEl = document.querySelector('.scrubber');
 
   // ---------- sizing ----------
   let vw = 0, vh = 0, dpr = 1;
@@ -426,8 +565,10 @@ export function start({ onFail }) {
     uniforms.uScale.value = (h * dpr * 0.5) / Math.tan((camera.fov * Math.PI) / 360);
     buildKeys();
     measure();
+    measureTrack();
     applyView();
   }
+  function measureTrack() { trackW = document.querySelector('.scrub-track')?.clientWidth || 0; }
   function applyView() {
     camera.setViewOffset(vw, vh, -view.ox * vw, -view.oy * vh, vw, vh);
     camera.updateProjectionMatrix();
@@ -446,15 +587,18 @@ export function start({ onFail }) {
   const camPos = new Vector3(), camLook = new Vector3(), tPos = new Vector3(), tLook = new Vector3();
   const wTarget = new Float32Array(MAXW);
   let raf = 0, last = 0, time = 0, revealStart = -1, first = true;
-  let nowT = 1, curStep = -1;
+  let nowT = 1, showT = 1, curStep = -1, arrivedCh = -1, pulseT = 9;
+  const lineDraw = chapters.map(() => 1);
   let perfAcc = 0, perfN = 0, degraded = false;
-  const startAt = performance.now();
+  let startAt = performance.now();
+  await yieldNow();
   resize(true);
 
   function stepWeights(i, out) {
-    if (i <= 0 || i > NC) { out.fill(1); return; }
+    const ch = stepCh[i];
+    if (ch < 0) { out.fill(1); return; }
     out.fill(0.34);
-    out[chapSlot(i - 1)] = 1.25;
+    out[chapSlot(ch)] = 1.25;
   }
   const wa = new Float32Array(MAXW), wb = new Float32Array(MAXW);
 
@@ -463,9 +607,17 @@ export function start({ onFail }) {
     const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
     last = now; time += dt;
     uniforms.uTime.value = time;
+    // (reads first, before any DOM writes this frame) fade panels as they leave the top so the flight between chapters stays visible
+    for (const sec of fadeSecs) {
+      const r = sec.getBoundingClientRect();
+      if (r.bottom < -50 || r.top > vh) continue;
+      const o = clamp((r.bottom - vh * 0.18) / (vh * 0.5), 0, 1);
+      const v = o.toFixed(2);
+      if (sec._o !== v) { sec._o = v; sec.style.opacity = v; }
+    }
 
     // adaptive quality: if we can't hold ~40fps, drop resolution and nebula
-    if (time > 2 && !degraded && !/[?&]q=/.test(location.search)) {
+    if (time > 2 && !degraded && devTier() < 0) {
       perfAcc += dt; perfN++;
       if (perfN >= 90) {
         if (perfAcc / perfN > 1 / 40) {
@@ -508,7 +660,8 @@ export function start({ onFail }) {
     camLook.x = damp(camLook.x, tLook.x, 3, dt); camLook.y = damp(camLook.y, tLook.y, 3, dt); camLook.z = damp(camLook.z, tLook.z, 3, dt);
     camera.position.copy(camPos);
     camera.lookAt(camLook);
-    const tox = A.ox + (B.ox - A.ox) * f, toy = A.oy + (B.oy - A.oy) * f;
+    // on phones the flight happens in the lower part of the screen (panels exit at the top)
+    const tox = A.ox + (B.ox - A.ox) * f, toy = A.oy + (B.oy - A.oy) * f + (mobile && i0 !== i1 ? Math.sin(Math.PI * f) * 0.42 : 0);
     if (Math.abs(tox - view.ox) + Math.abs(toy - view.oy) > 1e-4) {
       view.ox = damp(view.ox, tox, 3, dt); view.oy = damp(view.oy, toy, 3, dt); applyView();
     }
@@ -518,26 +671,66 @@ export function start({ onFail }) {
     for (let i = 0; i < MAXW; i++) { wTarget[i] = wa[i] + (wb[i] - wa[i]) * f; W[i] = damp(W[i], wTarget[i], 4, dt); }
     const tNow = A.t + (B.t - A.t) * f;
     nowT = damp(nowT, tNow, 4, dt);
-    const shown = rv < 1 ? Math.min(nowT, reveal) : nowT;
+    showT = damp(showT, A.show + (B.show - A.show) * f, 5, dt);
+    const shown = rv < 1 ? Math.min(showT, reveal) : showT;
     uniforms.uNow.value = rv < 1 ? 1.1 : nowT;
 
     lineMats.forEach((m, ci) => {
       if (!m) return;
       const on = reveal >= (chapEndT[ci] - 0.05) ? 1 : 0;
-      m.opacity = on * clamp(0.06 + (W[chapSlot(ci)] - 0.2) * 0.5, 0.03, 0.55);
+      const focused = ci === arrivedCh;
+      lineDraw[ci] = focused ? Math.min(1, lineDraw[ci] + dt / 1.8) : 1;
+      m.uniforms.uDraw.value = lineDraw[ci];
+      m.uniforms.uOpacity.value = on * (focused ? 0.75 : clamp(0.06 + (W[chapSlot(ci)] - 0.2) * 0.5, 0.03, 0.55));
     });
 
     // HUD
-    playhead.style.left = `${(shown * 100).toFixed(3)}%`;
-    scrubDate.textContent = fmtDate(t0 + shown * span * 86400000);
+    playhead.style.transform = `translateX(${(shown * trackW).toFixed(1)}px)`;
     const s = Math.round(P);
+    const activeCh = Math.abs(P - s) < 0.35 ? stepCh[s] : -1;
+    const dateTxt = activeCh >= 0 && rv >= 1 ? periodTxt[activeCh] : fmtDate(t0 + shown * span * 86400000);
+    if (dateTxt !== lastDate) { scrubDate.textContent = dateTxt; lastDate = dateTxt; }
+    if (activeCh !== lastRange) {
+      lastRange = activeCh;
+      if (range) {
+        if (activeCh >= 0) {
+          const a0 = Math.min(chapStartT[activeCh], chapEndT[activeCh]);
+          range.style.left = `${(a0 * 100).toFixed(2)}%`;
+          range.style.width = `${Math.max(0.6, (chapEndT[activeCh] - a0) * 100).toFixed(2)}%`;
+          range.style.opacity = '1';
+        } else range.style.opacity = '0';
+      }
+    }
+    // arrival: when a chapter becomes focused, fire the pulse and redraw its constellation
+    const arr = Math.abs(P - s) < 0.2 ? stepCh[s] : -1;
+    if (arr !== arrivedCh) {
+      arrivedCh = arr;
+      if (arr >= 0 && rv >= 1) {
+        pulseT = 0; lineDraw[arr] = 0;
+        uniforms.uPulseC.value.copy(chapInfo[arr].c);
+        ring.position.copy(chapInfo[arr].c);
+        ringU.uColor.value.copy(chapColor[arr]);
+        ringU.uSize.value = chapInfo[arr].rad * 7 + 18;
+        uniforms.uPulseCh.value = chapSlot(arr);
+      }
+    }
+    pulseT += dt;
+    uniforms.uPulseR.value = pulseT * 20;
+    uniforms.uPulseA.value = pulseT < 4 ? Math.exp(-pulseT * 1.2) : 0;
+    ring.visible = pulseT < 1.6;
+    ringU.uP.value = clamp(1 - Math.pow(1 - pulseT / 1.6, 2.2), 0, 1);
+
+
     if (s !== curStep) {
       curStep = s;
-      scrubTitle.textContent = s === 0 ? (story.person?.name || '') : s <= NC ? `${String(s).padStart(2, '0')} · ${chapters[s - 1].title}` : (story.cta?.line ? 'Now' : '');
-      marks.forEach((m) => m.classList.toggle('on', +m.dataset.step === s));
-      document.documentElement.style.setProperty('--accent', s >= 1 && s <= NC ? chapters[s - 1].color : '#7dd3fc');
+      const ch = stepCh[s], kind = stepKind[s];
+      scrubTitle.textContent = ch >= 0 ? `${String(ch + 1).padStart(2, '0')} · ${chapters[ch].title}`
+        : kind === 'impact' ? (story.impact?.title || '') : kind === 'cta' ? 'Now' : (story.person?.name || '');
+      marks.forEach((m) => m.classList.toggle('on', +m.dataset.ch === ch));
+      scrubEl?.style.setProperty('--accent', ch >= 0 ? chapters[ch].color : '#7dd3fc');
     }
-    if (nums.length) {
+    if (nums.length && now - lastNum > 60) {
+      lastNum = now;
       const q = clamp(el / 2.6, 0, 1), e = 1 - Math.pow(1 - q, 3);
       for (const n of nums) {
         if (n.done) continue;
@@ -547,16 +740,22 @@ export function start({ onFail }) {
     }
 
     // constellation labels for the focused chapter
-    const focusCh = Math.abs(P - s) < 0.42 && s >= 1 && s <= NC ? s - 1 : -1;
+    const focusCh = Math.abs(P - s) < 0.42 ? stepCh[s] : -1;
     const lblA = focusCh >= 0 ? 1 - Math.abs(P - s) / 0.42 : 0;
+    placed.length = 0;
     labelSets.forEach((set, ci) => {
       for (const L of set) {
         const show = ci === focusCh && rv >= 1 && L.rank < (mobile ? 3 : 5);
         if (!show) { if (L.vis) { L.el.style.opacity = '0'; L.vis = false; } continue; }
         tmp.copy(repoNode.get(L.id)).applyMatrix4(galaxy.matrixWorld).project(camera);
-        if (tmp.z > 1) { L.el.style.opacity = '0'; continue; }
         const x = (tmp.x * 0.5 + 0.5) * vw, y = (-tmp.y * 0.5 + 0.5) * vh;
-        L.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+        // skip off-screen labels and ones that would collide with a higher-ranked label
+        const bw = L.w, bh = 16, bx = Math.min(x, vw - bw - 6), by = y - 8;
+        const clash = tmp.z > 1 || x < 0 || x > vw || bx < panelRight || y < 8 || y > vh - 90 ||
+          placed.some((q) => bx < q.x + q.w && bx + bw > q.x && by < q.y + q.h && by + bh > q.y);
+        if (clash) { if (L.vis) { L.el.style.opacity = '0'; L.vis = false; } continue; }
+        placed.push({ x: bx, y: by, w: bw, h: bh });
+        L.el.style.transform = `translate(${bx.toFixed(1)}px, ${y.toFixed(1)}px)`;
         L.el.style.opacity = String(lblA);
         L.vis = true;
       }
@@ -577,10 +776,28 @@ export function start({ onFail }) {
     const r = track.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width;
     let best = 0, bd = Infinity;
-    chapters.forEach((c, ci) => { const d = Math.abs(chapEndT[ci] - x); if (d < bd) { bd = d; best = ci; } });
+    chapters.forEach((c, ci) => { const d = Math.abs((chapStartT[ci] + chapEndT[ci]) / 2 - x); if (d < bd) { bd = d; best = ci; } });
     document.getElementById(`ch-${chapters[best].id}`)?.scrollIntoView({ behavior: 'smooth' });
   });
 
-  document.documentElement.classList.add('ready');
+  // compile shaders without blocking where the driver supports parallel compile
+  await yieldNow();
+  // compile one program per task so no single task blocks for long
+  const parallel = !!renderer.compileAsync && renderer.extensions.has('KHR_parallel_shader_compile');
+  const objs = [];
+  scene.traverse((o) => { if (o.material) objs.push(o); });
+  for (const o of objs) {
+    try {
+      if (parallel) await renderer.compileAsync(o, camera, scene);
+      else renderer.compile(o, camera, scene);
+      await yieldNow();
+      // warm-up draw: forces program link + buffer upload for this object in its own task
+      renderer.render(o, camera);
+    } catch { /* lazy compile on first frame */ }
+    await yieldNow();
+  }
+  // panels below the fold rise in when they enter (per-element class: no global restyle)
+  for (const el of revealEls) if (el.getBoundingClientRect().top > window.innerHeight) el.classList.add('pre');
+  startAt = performance.now();
   play();
 }
