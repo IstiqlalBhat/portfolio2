@@ -153,8 +153,16 @@ export async function start({ onFail }) {
     return;
   }
   await yieldNow();
-  let tier = qualityTier();
-  let Q = TIERS[tier];
+  // software GL (SwiftShader/llvmpipe etc.) pays a pixel readback on every frame: go lean
+  let software = false;
+  try {
+    const gl = renderer.getContext();
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = String(dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+    software = /swiftshader|llvmpipe|softpipe|software|basic render/i.test(name);
+  } catch { /* ignore */ }
+  let tier = devTier() >= 0 ? devTier() : software ? 0 : qualityTier();
+  let Q = software ? { ...TIERS[0], dpr: 0.75 } : TIERS[tier];
   renderer.setClearColor(0x04050a, 1);
 
   const { chapters, repoChap } = chapterIndex(story);
@@ -507,6 +515,8 @@ export async function start({ onFail }) {
   const marks = [...document.querySelectorAll('.scrubber [data-ch]')];
   const range = document.getElementById('scrub-range');
   const fadeSecs = [...document.querySelectorAll('.chapter, .impact-sec')];
+  const endTxt = fmtDate(t0 + span * 86400000);
+  const fullSpanTxt = `${fmtDate(t0)} – ${endTxt}`;
   let lastDate = '', lastRange = -2, trackW = 0, lastNum = 0;
   const periodTxt = chapters.map((c) => {
     const f = (str) => { const m = /^(\d{4})-(\d{2})/.exec(str || ''); return m ? fmtDate(Date.UTC(+m[1], +m[2] - 1, 1)) : ''; };
@@ -530,7 +540,7 @@ export async function start({ onFail }) {
       if (r && !r.public) el.classList.add('priv');
       el.dataset.rank = rank;
       labelsEl.appendChild(el);
-      return { el, id, rank, w: 14 + t.length * 6.7 };
+      return { el, id, rank, w: 0 };
     });
   });
 
@@ -576,6 +586,11 @@ export async function start({ onFail }) {
   window.addEventListener('resize', () => resize(false), { passive: true });
   if (document.fonts?.ready) document.fonts.ready.then(measure);
   window.addEventListener('load', measure);
+  // sections use content-visibility, so their real heights arrive as they render: re-measure
+  if (window.ResizeObserver) {
+    let mq = 0;
+    new ResizeObserver(() => { if (!mq) mq = requestAnimationFrame(() => { mq = 0; measure(); }); }).observe(document.getElementById('story'));
+  }
 
   let mx = 0, my = 0, tmx = 0, tmy = 0;
   window.addEventListener('pointermove', (e) => {
@@ -602,8 +617,19 @@ export async function start({ onFail }) {
   }
   const wa = new Float32Array(MAXW), wb = new Float32Array(MAXW);
 
+  let prevRaf = 0, tick = 0, settled = false, lastY = -1, interacted = false, revealDone = false;
+  const markInteract = () => { interacted = true; };
+  for (const ev of ['scroll', 'pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel']) window.addEventListener(ev, markInteract, { passive: true, once: true });
   function frame(now) {
     raf = requestAnimationFrame(frame);
+    const rafDt = prevRaf ? (now - prevRaf) / 1000 : 0.016;
+    prevRaf = now;
+    // once the camera has settled, drop to ~30fps (twinkle only) to save battery and main thread
+    tick++;
+    // before the visitor interacts (and once the intro reveal is done), idle at ~12fps
+    const idleSkip = (!interacted && revealDone ? 5 : settled ? 2 : 1) * (software ? 3 : 1);
+    if (window.scrollY === lastY && tick % idleSkip !== 0) return;
+    lastY = window.scrollY;
     const dt = Math.min(0.05, last ? (now - last) / 1000 : 0.016);
     last = now; time += dt;
     uniforms.uTime.value = time;
@@ -613,12 +639,12 @@ export async function start({ onFail }) {
       if (r.bottom < -50 || r.top > vh) continue;
       const o = clamp((r.bottom - vh * 0.18) / (vh * 0.5), 0, 1);
       const v = o.toFixed(2);
-      if (sec._o !== v) { sec._o = v; sec.style.opacity = v; }
+      if (sec._o !== v) { sec._o = v; sec.style.setProperty('--fo', v); }
     }
 
     // adaptive quality: if we can't hold ~40fps, drop resolution and nebula
     if (time > 2 && !degraded && devTier() < 0) {
-      perfAcc += dt; perfN++;
+      perfAcc += rafDt; perfN++;
       if (perfN >= 90) {
         if (perfAcc / perfN > 1 / 40) {
           degraded = true; Q = TIERS[0];
@@ -671,7 +697,8 @@ export async function start({ onFail }) {
     for (let i = 0; i < MAXW; i++) { wTarget[i] = wa[i] + (wb[i] - wa[i]) * f; W[i] = damp(W[i], wTarget[i], 4, dt); }
     const tNow = A.t + (B.t - A.t) * f;
     nowT = damp(nowT, tNow, 4, dt);
-    showT = damp(showT, A.show + (B.show - A.show) * f, 5, dt);
+    const showTarget = A.show + (B.show - A.show) * f;
+    showT = Math.abs(showT - showTarget) < 0.001 ? showTarget : damp(showT, showTarget, 5, dt);
     const shown = rv < 1 ? Math.min(showT, reveal) : showT;
     uniforms.uNow.value = rv < 1 ? 1.1 : nowT;
 
@@ -688,12 +715,21 @@ export async function start({ onFail }) {
     playhead.style.transform = `translateX(${(shown * trackW).toFixed(1)}px)`;
     const s = Math.round(P);
     const activeCh = Math.abs(P - s) < 0.35 ? stepCh[s] : -1;
-    const dateTxt = activeCh >= 0 && rv >= 1 ? periodTxt[activeCh] : fmtDate(t0 + shown * span * 86400000);
+    const kindS = Math.abs(P - s) < 0.35 ? stepKind[s] : '';
+    // deterministic labels: chapters show their period, overview steps show the whole span / "Now"
+    const dateTxt = rv < 1 ? fmtDate(t0 + shown * span * 86400000)
+      : activeCh >= 0 ? periodTxt[activeCh]
+        : kindS === 'impact' ? fullSpanTxt
+          : kindS === 'hero' || kindS === 'cta' ? `Now · ${endTxt}`
+            : fmtDate(t0 + shown * span * 86400000);
     if (dateTxt !== lastDate) { scrubDate.textContent = dateTxt; lastDate = dateTxt; }
-    if (activeCh !== lastRange) {
-      lastRange = activeCh;
+    const rangeKey = activeCh >= 0 ? activeCh : kindS === 'impact' && rv >= 1 ? -9 : -1;
+    if (rangeKey !== lastRange) {
+      lastRange = rangeKey;
       if (range) {
-        if (activeCh >= 0) {
+        if (rangeKey === -9) {
+          range.style.left = '0%'; range.style.width = '100%'; range.style.opacity = '1';
+        } else if (activeCh >= 0) {
           const a0 = Math.min(chapStartT[activeCh], chapEndT[activeCh]);
           range.style.left = `${(a0 * 100).toFixed(2)}%`;
           range.style.width = `${Math.max(0.6, (chapEndT[activeCh] - a0) * 100).toFixed(2)}%`;
@@ -750,7 +786,14 @@ export async function start({ onFail }) {
         tmp.copy(repoNode.get(L.id)).applyMatrix4(galaxy.matrixWorld).project(camera);
         const x = (tmp.x * 0.5 + 0.5) * vw, y = (-tmp.y * 0.5 + 0.5) * vh;
         // skip off-screen labels and ones that would collide with a higher-ranked label
-        const bw = L.w, bh = 16, bx = Math.min(x, vw - bw - 6), by = y - 8;
+        if (!L.w) L.w = L.el.offsetWidth + 2 || 14 + L.el.textContent.length * 7.4;
+        // keep labels inside the viewport: flip to the left of the star when they would overflow
+        const bw = L.w, bh = 18, by = y - 9;
+        const flip = x + bw > vw - 6;
+        let bx = flip ? x - bw : x;
+        if (flip !== !!L.flip) { L.flip = flip; L.el.classList.toggle('flip', flip); }
+        if (bx < 6) bx = 6;
+        if (bx + bw > vw - 6) bx = vw - 6 - bw;
         const clash = tmp.z > 1 || x < 0 || x > vw || bx < panelRight || y < 8 || y > vh - 90 ||
           placed.some((q) => bx < q.x + q.w && bx + bw > q.x && by < q.y + q.h && by + bh > q.y);
         if (clash) { if (L.vis) { L.el.style.opacity = '0'; L.vis = false; } continue; }
@@ -761,6 +804,8 @@ export async function start({ onFail }) {
       }
     });
 
+    revealDone = rv >= 1 && el > 4;
+    settled = rv >= 1 && pulseT > 1.7 && camPos.distanceToSquared(tPos) < 0.002 && Math.abs(nowT - tNow) < 0.002;
     renderer.render(scene, camera);
   }
 
@@ -790,9 +835,9 @@ export async function start({ onFail }) {
     try {
       if (parallel) await renderer.compileAsync(o, camera, scene);
       else renderer.compile(o, camera, scene);
-      await yieldNow();
       // warm-up draw: forces program link + buffer upload for this object in its own task
-      renderer.render(o, camera);
+      // (skipped on software GL, where every draw also costs a full-canvas readback/commit)
+      if (!software) { await yieldNow(); renderer.render(o, camera); }
     } catch { /* lazy compile on first frame */ }
     await yieldNow();
   }
