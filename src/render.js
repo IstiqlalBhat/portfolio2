@@ -202,7 +202,7 @@ export function renderBody(story) {
         <p class="eyebrow"><span class="dot"></span>${esc(p.role)}${p.handle ? ` <span class="sep">/</span> <span class="handle">@${esc(p.handle)}</span>` : ''}</p>
         <h1 id="name">${esc(p.name)}</h1>
         <p class="hook">${esc(p.hook)}</p>
-        <p class="cue"><span class="cue-line"></span><span>Scroll through time · every point of light is a commit</span></p>
+        <p class="cue"><span class="cue-line"></span><span>Scroll through time · a galaxy drawn from the real commit history</span></p>
       </div>
       <div class="hero-more">
         <p class="subhook">${esc(p.subhook)}</p>
@@ -221,7 +221,7 @@ export function renderBody(story) {
       ${skills ? `<ul class="skills" aria-label="Skills">${skills}</ul>` : ''}
       ${publicRepos ? `<p class="pub-h">Public repositories</p><ul class="pub">${publicRepos}</ul>` : ''}
     </div>
-    <footer class="foot"><span>${esc(p.name)}</span><span>Every point of light is a commit · built with three.js</span></footer>
+    <footer class="foot"><span>${esc(p.name)}</span><span>Galaxy drawn from the real commit history · built with three.js</span></footer>
   </section>
 </main>`;
 }

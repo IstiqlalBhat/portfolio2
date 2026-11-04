@@ -1,4 +1,4 @@
-// WebGL "commit galaxy": every commit is a point of light placed by date along a
+// WebGL "commit galaxy": commits become points of light placed by date along a
 // spiral arm; repos cluster into constellations; camera flies chapter to chapter
 // driven by scroll. Single Points draw for commits, procedural only.
 import {
