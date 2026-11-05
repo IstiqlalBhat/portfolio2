@@ -9,7 +9,7 @@ const files = [];
 (function walk(dir) {
   for (const f of readdirSync(dir)) {
     const p = join(dir, f);
-    if (statSync(p).isDirectory()) walk(p);
+    if (statSync(p).isDirectory()) { if (p !== join(dist, 'designs')) walk(p); }
     else if (/\.(m?js)$/.test(f)) files.push(p);
   }
 })(dist);
