@@ -42,7 +42,7 @@
     ]
    },
    {
-    "claim": "Validated a vision fix on a held-out, human-labelled set: exact-count rate 81% → 83%, over-count 0.53 → 0.43 per photo-run.",
+    "claim": "Validated a vision fix on a held-out, human-labelled set: exact-count rate 81% → 83%, and over-counts per photo run fell 0.53 → 0.43.",
     "evidence": [
      "E19"
     ]
@@ -133,7 +133,7 @@
    "label": "Private · research prototype C",
    "public": false,
    "url": null,
-   "description": "Material data out of Revit BIM models into a blockchain-backed record.",
+   "description": "Pulls quantities from building models and anchors them on-chain.",
    "featured": false,
    "stack": [
     "TypeScript",
@@ -168,7 +168,7 @@
    "public": true,
    "url": "https://github.com/IstiqlalBhat/istiqlalbhat",
    "description": "Public GitHub profile README, rebuilt as a terminal session.",
-   "featured": true,
+   "featured": false,
    "stack": [],
    "chapter": "carbon-ledger",
    "commits": 49,
@@ -331,7 +331,7 @@
    "label": "Private · retrieval prototype A",
    "public": false,
    "url": null,
-   "description": "Email RAG chatbot with a GPU Graph-RAG notebook.",
+   "description": "Ask questions of a mailbox; graph-based retrieval on GPU.",
    "featured": false,
    "stack": [
     "Jupyter Notebook",
@@ -519,7 +519,7 @@
    "label": "Private · agent experiment B",
    "public": false,
    "url": null,
-   "description": "Peer-to-peer AI agents for construction procurement.",
+   "description": "Buying agents negotiating with each other for building-supply orders.",
    "featured": false,
    "stack": [
     "TypeScript",
@@ -645,7 +645,7 @@
    "label": "Private · mobile app B",
    "public": false,
    "url": null,
-   "description": "React Native field-capture client: photos and voice notes per room.",
+   "description": "Phone app for capturing each room in photos and spoken notes.",
    "featured": false,
    "stack": [
     "TypeScript"
@@ -678,7 +678,7 @@
    "label": "Private · hardware prototype C",
    "public": false,
    "url": null,
-   "description": "Hand-gesture and realtime-voice control of smart lights.",
+   "description": "Lights that respond to hand gestures and spoken direction.",
    "featured": false,
    "stack": [
     "Python"
@@ -693,7 +693,7 @@
    "label": "Private · internal app A",
    "public": false,
    "url": null,
-   "description": "Upload HTML/JS, render it in a sandbox, share by link.",
+   "description": "Hosted, isolated previews of web pages, shareable by URL.",
    "featured": false,
    "stack": [
     "TypeScript",
@@ -729,7 +729,7 @@
    "label": "Private · cloud platform A",
    "public": false,
    "url": null,
-   "description": "EKS, SQS workers, Postgres migration Job, contract tests.",
+   "description": "The inventory product on EKS: queue workers, migration Job, contract tests.",
    "featured": false,
    "stack": [
     "TypeScript",
@@ -783,7 +783,7 @@
    "label": "Private · retrieval prototype B",
    "public": false,
    "url": null,
-   "description": "Grounded extraction, contradiction resolution, cited answers.",
+   "description": "Company knowledge that updates itself and answers with citations.",
    "featured": false,
    "stack": [
     "TypeScript",
@@ -870,7 +870,7 @@
    "label": "Private · LLM app E",
    "public": false,
    "url": null,
-   "description": "Contextual-bandit router that learns which model earns its cost.",
+   "description": "Picks the cheapest model that still answers well, learning from live traffic.",
    "featured": false,
    "stack": [
     "Python"
@@ -903,7 +903,7 @@
    "label": "Private · agent tooling A",
    "public": false,
    "url": null,
-   "description": "Tuned fork of an open-source agent-skills framework.",
+   "description": "Personal tuning of a public coding-agent workflow kit.",
    "featured": false,
    "stack": [
     "Shell",
@@ -921,7 +921,7 @@
    "label": "Private · security research A",
    "public": false,
    "url": null,
-   "description": "Scripted Android security-research workspace.",
+   "description": "Repeatable mobile app security-testing setup.",
    "featured": false,
    "stack": [
     "Python",
@@ -938,7 +938,7 @@
    "label": "Private · security research B",
    "public": false,
    "url": null,
-   "description": "Research case study on an AI assistant app's defenses.",
+   "description": "Testing how a consumer AI assistant app defends itself.",
    "featured": false,
    "stack": [],
    "chapter": "agent-os",
@@ -951,7 +951,7 @@
    "label": "Private · agent tooling B",
    "public": false,
    "url": null,
-   "description": "Agent skill that builds launch videos from code.",
+   "description": "Turns a codebase into a product-launch video, packaged as an agent skill.",
    "featured": false,
    "stack": [
     "JavaScript",
@@ -1004,7 +1004,7 @@
    "label": "Private · agent experiment C",
    "public": false,
    "url": null,
-   "description": "MVP of an agentic OS for physical operations.",
+   "description": "Early prototype of agents coordinating real-world operations.",
    "featured": false,
    "stack": [
     "TypeScript",
@@ -2850,7 +2850,7 @@
      ]
     },
     {
-     "claim": "Counts you can trust, proven on held-out data: exact-count rate 81% → 83% and over-count 0.53 → 0.43 per photo-run, under a pre-registered evaluation of 33 photos and 146 human-labelled counts.",
+     "claim": "Counts you can trust, proven on held-out data: exact-count rate 81% → 83% and over-counts per photo run down 0.53 → 0.43, under a pre-registered evaluation of 33 photos and 146 human-labelled counts.",
      "evidence": [
       "E19"
      ]
@@ -3060,6 +3060,7 @@
      "label": "commits"
     }
    ],
+   "metricsNote": "PRs here are squash-merged into one commit each, so the commit count understates the work.",
    "stack": [
     "Kubernetes",
     "Helm",
