@@ -74,7 +74,7 @@ void main() {
 // glows: one point per drone; a moving drone draws a light streak behind it (long-exposure look)
 const GLOW_VS = /* glsl */`
 attribute vec3 iCol; attribute float iLum; attribute vec3 iVel; attribute float seed;
-uniform float uBase, uMinPx, uPxPerUnit, uMirror, uTime, uDpr, uMaxPt, uTrail, uSweepT, uSweepW;
+uniform float uBase, uMinPx, uPxPerUnit, uMirror, uTime, uDpr, uMaxPt, uTrail, uTrailCap, uSweepT, uSweepW, uStretch;
 uniform vec2 uView;
 varying vec3 vC; varying float vA, vR, vS; varying vec2 vT;
 void main() {
@@ -97,12 +97,12 @@ void main() {
   if (uMirror > 0.5) {
     vA *= smoothstep(0.15, 1.2, position.y);
     mv.x += sin(uTime * 1.6 + p.y * 1.7 + position.x * 0.6) * size * 0.35;
-    S = px * 2.2;
+    S = px * uStretch;
   } else if (uTrail > 0.0) {
     vec3 vv = mat3(viewMatrix) * iVel;
     vec2 sv = uPxPerUnit * (vv.xy * depth + mv.xy * vv.z) / (depth * depth);
     T = vec2(-sv.x, sv.y) * uTrail;
-    float tl = length(T), cap = px * 6.0;
+    float tl = length(T), cap = px * uTrailCap;
     if (tl > cap) T *= cap / tl;
     S = px + length(T);
   }
@@ -113,12 +113,12 @@ void main() {
   gl_PointSize = vA < 0.004 ? 0.0 : vS * uDpr;
 }`;
 const GLOW_FS = /* glsl */`
-uniform float uGain, uMirror;
+uniform float uGain, uMirror, uStretch;
 varying vec3 vC; varying float vA, vR, vS; varying vec2 vT;
 void main() {
   vec2 q = (gl_PointCoord - 0.5) * vS;
   if (uMirror > 0.5) {
-    vec2 uv = q / (vR * vec2(0.75, 2.2));
+    vec2 uv = q / (vR * vec2(0.75, uStretch));
     float d2 = dot(uv, uv);
     if (d2 > 1.0) discard;
     float core = exp(-d2 * 16.0), halo = exp(-d2 * 4.0) * 0.28;
@@ -203,7 +203,8 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   const lite = soft || matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
   const renderer = new WebGLRenderer(context ? { canvas, context } : { canvas, antialias: !lite, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
-  let dpr = Math.min(window.devicePixelRatio || 1, soft ? 1 : 1.5);
+  // software rasterisers pay per pixel: 1x (0.8x on wide screens) instead of the 1.5x cap
+  let dpr = Math.min(window.devicePixelRatio || 1, soft ? (innerWidth > 1000 ? 0.8 : 1) : 1.5);
   renderer.setPixelRatio(dpr);
   const gl = renderer.getContext();
   const maxPt = Math.max(16, (gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE) || [1, 64])[1]);
@@ -247,7 +248,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   const glowU = {
     uBase: { value: 0.1 }, uMinPx: { value: 2.6 }, uPxPerUnit: { value: 1 }, uTime: { value: 0 }, uDpr: { value: dpr },
     uMaxPt: { value: maxPt }, uTrail: { value: 0 }, uView: { value: [innerWidth, innerHeight] },
-    uSweepT: { value: -100 }, uSweepW: { value: 40 },
+    uSweepT: { value: -100 }, uSweepW: { value: 40 }, uStretch: { value: soft ? 1.7 : 2.2 }, uTrailCap: { value: soft ? 3 : 6 },
   };
   const mkGlow = (mirror, gain) => new Points(pts, new ShaderMaterial({
     vertexShader: GLOW_VS, fragmentShader: GLOW_FS, transparent: true, depthWrite: false, depthTest: false, blending: AdditiveBlending, premultipliedAlpha: true,

@@ -19,15 +19,26 @@ let active = -1;
  * Opens the show's WebGL2 context on the real canvas (three.js reuses it) and classifies the GPU:
  * 'soft' for software rasterisers (SwiftShader, llvmpipe…), else 'gpu'; 'none' without WebGL2.
  */
+const glOptions = (antialias) => ({ alpha: true, antialias, depth: true, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
 function openGL(cv) {
   try {
     const small = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
-    const gl = cv.getContext('webgl2', { alpha: true, antialias: !small, depth: true, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
-    if (!gl) return { tier: 'none', gl: null };
+    let gl = cv.getContext('webgl2', glOptions(!small));
+    if (!gl) return { tier: 'none', gl: null, canvas: cv };
     const ext = gl.getExtension('WEBGL_debug_renderer_info');
     const r = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
-    return { tier: /swiftshader|llvmpipe|softpipe|software|basic render|lavapipe/i.test(r) ? 'soft' : 'gpu', gl };
-  } catch { return { tier: 'none', gl: null }; }
+    const soft = /swiftshader|llvmpipe|softpipe|software|basic render|lavapipe/i.test(r);
+    // multisampling is nearly free on a GPU but multiplies the fill cost of a software rasteriser
+    if (soft && !small) {
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      const c = cv.cloneNode(false);
+      cv.replaceWith(c);
+      cv = c;
+      gl = cv.getContext('webgl2', glOptions(false));
+      if (!gl) return { tier: 'none', gl: null, canvas: cv };
+    }
+    return { tier: soft ? 'soft' : 'gpu', gl, canvas: cv };
+  } catch { return { tier: 'none', gl: null, canvas: cv }; }
 }
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const show3d = !reduce && !params.has('flat') && typeof WebGL2RenderingContext !== 'undefined';
@@ -119,7 +130,8 @@ async function boot() {
   const mod = show3d ? font.then(() => import('./swarm.js')) : null;
   const glb = show3d ? font.then(() => fetch(new URL('./assets/drone.glb', document.baseURI))).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null) : null;
   await font;
-  const { tier, gl } = mod ? openGL(canvas) : { tier: 'none', gl: null };
+  const { tier, gl, canvas: cv } = mod ? openGL(canvas) : { tier: 'none', gl: null, canvas };
+  canvas = cv;
   const ctx = { canvas, cues, fleet, layout, formation, params, tier, gl, glb, onIntroEnd: endIntro };
   if (mod && gl) {
     try { engine = await (await mod).start(ctx); document.body.classList.add('show3d'); } catch (e) { console.warn('WebGL show failed, using 2D', e); }
