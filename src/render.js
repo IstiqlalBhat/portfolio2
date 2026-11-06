@@ -79,7 +79,7 @@ ${nav}
       <h1><span class="name">${esc(p.name)}</span> <span class="role">${esc(p.role)}</span></h1>
       <p class="hook">${esc(p.hook)}</p>
       <p class="sub">${esc(p.subhook)}</p>
-      <p class="legend">Every light in this sky is one commit: ${num(total)} drones, flying as ${num(systems)} squadrons, one per system built.</p>
+      <p class="legend">Every drone light is one commit: ${num(total)} drones, flying as ${num(systems)} squadrons, one per repository.</p>
       <a class="down" href="#cue-merged"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>Run the show</a>
     </div>
   </section>
