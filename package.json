@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5113",
     "build": "vite build && node scripts/size-check.mjs",
-    "preview": "vite preview",
-    "size": "node scripts/size-check.mjs"
+    "preview": "vite preview --port 5113 --strictPort",
+    "drone": "/usr/bin/python3 blender/make_drone.py"
   },
   "dependencies": {
     "three": "0.187.0"

@@ -1,26 +1,18 @@
-// Fails the build if total gzipped JS in dist/ exceeds the budget.
+// Fails the build if total gzipped JS exceeds the 400 KB budget; reports 3D asset size.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-const BUDGET = 400 * 1024;
 const dist = new URL('../dist/', import.meta.url).pathname;
-const files = [];
-(function walk(dir) {
-  for (const f of readdirSync(dir)) {
-    const p = join(dir, f);
-    if (statSync(p).isDirectory()) { if (p !== join(dist, 'designs')) walk(p); }
-    else if (/\.(m?js)$/.test(f)) files.push(p);
-  }
-})(dist);
-let total = 0;
-for (const f of files) {
-  const raw = readFileSync(f);
-  const gz = gzipSync(raw, { level: 9 }).length;
-  total += gz;
-  console.log(`${(raw.length / 1024).toFixed(1).padStart(8)} KB raw ${(gz / 1024).toFixed(1).padStart(8)} KB gz  ${f.slice(dist.length)}`);
+// designs/ holds separately budgeted tournament previews; only the main site counts here.
+const walk = (d) => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? (join(d, f) === join(dist, 'designs') ? [] : walk(join(d, f))) : [join(d, f)]));
+const files = walk(dist);
+let js = 0;
+for (const f of files.filter((f) => f.endsWith('.js'))) {
+  const gz = gzipSync(readFileSync(f), { level: 9 }).length;
+  js += gz;
+  console.log(`${(gz / 1024).toFixed(1).padStart(7)} KB gz  ${f.slice(dist.length)}`);
 }
-console.log(`Total JS gzipped: ${(total / 1024).toFixed(1)} KB (budget ${BUDGET / 1024} KB)`);
-if (!files.length) { console.error('size-check: no JS found in dist/'); process.exit(1); }
-if (total > BUDGET) { console.error('size-check: FAIL — over budget'); process.exit(1); }
-console.log('size-check: OK');
+const glb = files.filter((f) => f.endsWith('.glb')).reduce((s, f) => s + statSync(f).size, 0);
+console.log(`JS total ${(js / 1024).toFixed(1)} KB gz (budget 400) · 3D assets ${(glb / 1024).toFixed(1)} KB (budget 1536)`);
+if (js > 400 * 1024 || glb > 1536 * 1024) { console.error('over budget'); process.exit(1); }

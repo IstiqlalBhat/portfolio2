@@ -5,7 +5,7 @@ import { renderHead, renderBody } from './src/render.js';
 
 const storyPath = fileURLToPath(new URL('./src/data/story.json', import.meta.url));
 
-// Pre-renders all story content into index.html at build/dev time.
+// Pre-renders every story string into index.html (no-JS / no-WebGL / reduced-motion all read it).
 function storyHtml() {
   return {
     name: 'story-html',
@@ -13,14 +13,11 @@ function storyHtml() {
       const story = JSON.parse(readFileSync(storyPath, 'utf8'));
       return html.replace('<!--STORY_HEAD-->', renderHead(story)).replace('<!--STORY_BODY-->', renderBody(story));
     },
-    handleHotUpdate({ file, server }) {
-      if (file === storyPath) server.ws.send({ type: 'full-reload' });
-    },
   };
 }
 
 export default defineConfig({
-  base: '/portfolio2/',
+  base: './',
   plugins: [storyHtml()],
-  build: { target: 'es2020', chunkSizeWarningLimit: 800, reportCompressedSize: true },
+  build: { target: 'es2020', reportCompressedSize: true, chunkSizeWarningLimit: 800 },
 });
