@@ -7,7 +7,7 @@
   "role": "AI Engineer",
   "githubUrl": "https://github.com/IstiqlalBhat",
   "hook": "AI that sees, listens, and runs other AIs — 412 PRs merged in under 8 months.",
-  "subhook": "Production AI, end to end, at an AI venture studio. On an insurance adjuster's real photo, the redesigned vision pipeline found 11 items; the old one found 1.",
+  "subhook": "Ships production AI: insurance-claim inventories from photos, a voice assistant with memory, a platform for AI agents. On an adjuster's real photo, items found: 1 → 11.",
   "subhookEvidence": [
    "E17"
   ]
@@ -36,24 +36,24 @@
  ],
  "impact": {
   "title": "What it adds up to",
-  "narrative": "In the pull requests' own numbers:",
+  "narrative": "Held to numbers, not adjectives:",
   "points": [
    {
-    "claim": "Pricing in ~5 s instead of ~60 s per item, as projected in the PR: a parallel retail-search fan-out with LLM ranking.",
-    "evidence": [
-     "E12"
-    ]
-   },
-   {
-    "claim": "A counting fix held to a pre-registered rule on held-out photos: exact counts 81% → 83%, over-counts per photo run 0.53 → 0.43.",
+    "claim": "Exact item counts on held-out photos: 81% → 83%, over-counts per photo run 0.53 → 0.43, passing a pre-registered rule.",
     "evidence": [
      "E19"
     ]
    },
    {
-    "claim": "Snappier voice replies: the audio flush threshold went from ~1.5 s to ~0.3 s with the move to Gemini Live.",
+    "claim": "Duplicate uploads stopped at the door: 5 copies sent at once now give 1 original and 4 linked duplicates, in 5 of 5 runs.",
     "evidence": [
-     "E3"
+     "E26"
+    ]
+   },
+   {
+    "claim": "Pricing in ~5 s instead of ~60 s per item, as projected in the PR: a parallel retail-search fan-out with LLM ranking.",
+    "evidence": [
+     "E12"
     ]
    }
   ]
@@ -97,10 +97,10 @@
   },
   {
    "id": 2,
-   "label": "Private · coursework A",
+   "label": "Private · class project",
    "public": false,
    "url": null,
-   "description": "Coursework: classic ML plus an LLM for emotion-based recommendations.",
+   "description": "Class project: mood-based movie picks from classic ML plus an LLM.",
    "featured": false,
    "stack": [
     "JavaScript",
@@ -133,10 +133,10 @@
   },
   {
    "id": 4,
-   "label": "Private · coursework B",
+   "label": "Private · early project A",
    "public": false,
    "url": null,
-   "description": "Authorized penetration-testing coursework.",
+   "description": "Early Python security script.",
    "featured": false,
    "stack": [
     "Python",
@@ -155,7 +155,7 @@
    "description": "Public GitHub profile README, rebuilt as a terminal session and kept current.",
    "featured": false,
    "stack": [],
-   "chapter": "carbon-ledger",
+   "chapter": "night-builds",
    "commits": 49,
    "firstCommit": "2025-06-14",
    "lastCommit": "2026-09-24",
@@ -163,10 +163,10 @@
   },
   {
    "id": 6,
-   "label": "Private · coursework C",
+   "label": "Private · early project B",
    "public": false,
    "url": null,
-   "description": "Authorized penetration-testing coursework (C++).",
+   "description": "Early C++ security tool for authorized penetration tests.",
    "featured": false,
    "stack": [
     "C++"
@@ -178,10 +178,10 @@
   },
   {
    "id": 7,
-   "label": "Private · coursework D",
+   "label": "Private · early project C",
    "public": false,
    "url": null,
-   "description": "Order and inventory management coursework in Java.",
+   "description": "Early Java app for orders and inventory, on a SQL database.",
    "featured": false,
    "stack": [
     "Java"
@@ -196,7 +196,7 @@
    "label": "Private · web game",
    "public": false,
    "url": null,
-   "description": "A browser text game built to learn AI-assisted coding.",
+   "description": "Interactive text game in the browser, on serverless functions.",
    "featured": false,
    "stack": [
     "JavaScript",
@@ -228,10 +228,10 @@
   },
   {
    "id": 10,
-   "label": "Private · research notebook",
+   "label": "Private · AI notebook",
    "public": false,
    "url": null,
-   "description": "Research notebook on LLMs for autonomous driving.",
+   "description": "Notebook on LLMs for autonomous vehicles.",
    "featured": false,
    "stack": [
     "Jupyter Notebook",
@@ -300,7 +300,7 @@
    "label": "Private · UI experiment B",
    "public": false,
    "url": null,
-   "description": "Mobile-optimised generative visual experience.",
+   "description": "Mobile-optimised interactive visual experience.",
    "featured": false,
    "stack": [
     "JavaScript",
@@ -418,7 +418,7 @@
    "label": "Private · agent experiment A",
    "public": false,
    "url": null,
-   "description": "First agentic AI experiment.",
+   "description": "Early agentic AI experiment.",
    "featured": false,
    "stack": [
     "Python"
@@ -505,7 +505,7 @@
    "label": "Private · agent experiment B",
    "public": false,
    "url": null,
-   "description": "Buying agents negotiating with each other for building-supply orders.",
+   "description": "Agent-to-agent AI for construction procurement.",
    "featured": false,
    "stack": [
     "TypeScript",
@@ -2642,7 +2642,7 @@
    },
    "kicker": "Research roots: a building's carbon footprint, made tamper-proof.",
    "summary": "Material data pulled from Revit building models, carbon results written to Ethereum where no one can quietly edit them.",
-   "narrative": "It started in construction research, with one question: who gets to edit a building's carbon numbers? Nobody, if material data comes straight out of the Revit BIM model and the results go to Ethereum. The same building models then drove an automated-procurement prototype that grew from a smart contract into a PostgreSQL app.",
+   "narrative": "Construction research first: embodied carbon computed from material data in Revit building models and written to Ethereum, so no one can quietly edit the numbers. The same models also drove an automated-procurement prototype, rebuilt from a smart contract into a PostgreSQL app.",
    "impact": [
     {
      "claim": "Tamper-proof carbon records: embodied carbon computed from Revit BIM material data and written to an Ethereum ledger.",
@@ -2660,7 +2660,7 @@
    ],
    "metrics": [
     {
-     "value": "118",
+     "value": "69",
      "label": "commits"
     }
    ],
@@ -2676,7 +2676,6 @@
     2,
     3,
     4,
-    5,
     6,
     7,
     10
@@ -2693,7 +2692,7 @@
    },
    "kicker": "After a silent summer, the commit graph lights up with hands-on AI builds.",
    "summary": "Graph-RAG over an email archive, an LLM parser for purchase orders, live anomaly detection on an IoT rig.",
-   "narrative": "A Graph-RAG chatbot over a raw email archive, an LLM parser for purchase-order emails, an IoT rig with live anomaly detection: exactly the toolkit the next chapter needed.",
+   "narrative": "A Graph-RAG chatbot over a raw email archive, an LLM parser for purchase-order emails, an IoT rig with live anomaly detection, plus a public portfolio site and profile README.",
    "impact": [
     {
      "claim": "Questions answered over a raw email archive: hybrid retrieval plus a GPU-accelerated Graph-RAG notebook.",
@@ -2710,14 +2709,15 @@
    ],
    "metrics": [
     {
-     "value": "477",
+     "value": "526",
      "label": "commits"
     },
     {
-     "value": "17",
+     "value": "18",
      "label": "repositories"
     }
    ],
+   "metricsNote": "Includes the public profile README's 49 commits, spread from Jun 2025 to Sep 2026, not only these months.",
    "stack": [
     "Python",
     "Jupyter",
@@ -2728,6 +2728,7 @@
     "C++"
    ],
    "repoIds": [
+    5,
     8,
     9,
     11,
@@ -2746,6 +2747,14 @@
     24,
     25
    ],
+   "ambient": {
+    "repoIds": [
+     5
+    ],
+    "commits": 49,
+    "start": "2025-06",
+    "end": "2026-09"
+   },
    "color": "#5B8DEF"
   },
   {
@@ -2756,9 +2765,9 @@
     "start": "2026-03",
     "end": "2026-05"
    },
-   "kicker": "First production role: a voice-first AI assistant with long-term memory.",
+   "kicker": "Into production: a voice-first AI assistant with long-term memory.",
    "summary": "Moved onto Gemini Live, then given pgvector recall, multimodal memory and an LLM-maintained wiki.",
-   "narrative": "The first production product: a voice assistant that remembers, moved onto Gemini Live and given pgvector recall, multimodal memory and an LLM-maintained wiki. Then the unglamorous half that makes it real: on-device iOS speech, a cold-start microphone fix, production errors traced through server logs.",
+   "narrative": "A voice assistant that remembers: moved onto Gemini Live, then given pgvector recall, multimodal memory and an LLM-maintained wiki. Around it, the work that keeps it running: on-device iOS speech, a cold-start microphone fix, production errors traced through server logs.",
    "impact": [
     {
      "claim": "Remembers what it heard and saw: pgvector recall over past sessions, plus joint image-and-text embeddings.",
@@ -2817,20 +2826,20 @@
     "start": "2026-04",
     "end": "2026-10"
    },
-   "kicker": "The flagship: photograph a room, get back a priced, itemised claims inventory.",
-   "summary": "Built the two-pass vision pipeline at its core, then the plumbing that keeps it fast and correct under load.",
-   "narrative": "Photograph a room; get back an itemised, priced inventory ready for an insurance claim. At its core sits a two-pass vision pipeline that detects every object, then identifies each one up close. The hard part was the plumbing around it: parallel workers, atomic duplicate checks, memory limits under load.",
+   "kicker": "The biggest build: photograph a room, get a priced, itemised claims inventory.",
+   "summary": "The two-pass vision pipeline at its core, plus the plumbing that keeps it fast and correct under load.",
+   "narrative": "Photograph a room; get back an itemised, priced inventory ready for an insurance claim. At its core, a two-pass vision pipeline detects every object, then identifies each one up close. Around it: parallel workers, atomic duplicate checks and per-worker memory limits, tested under load.",
    "impact": [
     {
-     "claim": "~9 min → ~3 min for a 6-photo claim, as estimated in the PR: one parallel worker per upload, not one long job.",
+     "claim": "Two load bugs found and fixed at 10 concurrent photos: out-of-memory worker kills, and retries erasing duplicate flags.",
      "evidence": [
-      "E13"
+      "E18"
      ]
     },
     {
-     "claim": "Duplicate uploads stopped at the door: 5 copies sent at once now give 1 original and 4 linked duplicates, in 5 of 5 runs.",
+     "claim": "~9 min → ~3 min for a 6-photo claim, as estimated in the PR: one parallel worker per upload, not one long job.",
      "evidence": [
-      "E26"
+      "E13"
      ]
     }
    ],
@@ -2872,12 +2881,12 @@
     "start": "2026-05",
     "end": "2026-11"
    },
-   "kicker": "The flagship, re-platformed AWS-native: queue workers, Terraform, Kubernetes.",
+   "kicker": "The same product, rebuilt AWS-native: queue workers, Terraform, Kubernetes.",
    "summary": "SQS workers streaming progress over SSE, Terraform on a shared EKS cluster, migrations run before every rollout.",
-   "narrative": "The same product, rebuilt AWS-native: LLM work on SQS workers streaming progress over SSE, Terraform on a shared EKS cluster, migrations as a Kubernetes Job before every rollout. An architecture review closed with workers that stay correct under at-least-once delivery.",
+   "narrative": "LLM work moved onto SQS workers that stream progress over SSE, with Terraform on a shared EKS cluster and migrations as a Kubernetes Job before every rollout. Fixes from an architecture review then made worker callbacks idempotent under at-least-once delivery.",
    "impact": [
     {
-     "claim": "Workers stay correct when a message arrives twice: idempotent callbacks, across ~25k lines of architecture fixes.",
+     "claim": "Workers stay correct when a message arrives twice: idempotent callbacks, in an architecture pass of ~25k lines changed.",
      "evidence": [
       "E33"
      ]
@@ -2927,9 +2936,9 @@
     "start": "2026-05",
     "end": "2026-09"
    },
-   "kicker": "Turning meetings into agent memory — without leaking a word.",
-   "summary": "Deny-by-default ingest, per-person OAuth with nothing stored, and a knowledge graph built from what was said.",
-   "narrative": "Feed an organisation's meetings to its AI agents without building a surveillance machine. Approval comes first, each person connects their own account, and what was said becomes a knowledge graph the agents can use.",
+   "kicker": "Turning meetings into agent memory, with approval before a word gets in.",
+   "summary": "Deny-by-default ingest, per-person OAuth with no meeting content stored, and a knowledge graph built from what was said.",
+   "narrative": "An organisation's meetings, fed to its AI agents on explicit terms: approval comes first, each person connects their own account, and what was said becomes a knowledge graph the agents can use.",
    "impact": [
     {
      "claim": "No meeting reaches an agent unless approved: a deny-by-default allowlist in front of transcript ingestion.",
@@ -2938,7 +2947,7 @@
      ]
     },
     {
-     "claim": "Routing users can set up on their own: an ordered rule stack, signed webhooks, a durable outbox and 176 tests.",
+     "claim": "Meeting routing that works like email filters: an ordered rule stack, signed webhooks, a durable outbox and 176 tests.",
      "evidence": [
       "E39"
      ]
@@ -2987,10 +2996,10 @@
    },
    "kicker": "A multi-tenant platform where every workspace gets its own team of AI agents.",
    "summary": "Control plane, agent rosters, skill allowlists and owner-approved tasks, provisioned per workspace on Kubernetes.",
-   "narrative": "A multi-tenant platform that provisions a private team of AI agents for every workspace on Kubernetes. The hard parts were distributed-systems parts, from fencing stale queue messages to hot-adding agents without a gateway restart.",
+   "narrative": "A multi-tenant platform that provisions a private team of AI agents for every workspace on Kubernetes. Underneath, distributed-systems fixes: stale queue messages fenced off, agents hot-added without a gateway restart, retries that stop on terminal failures.",
    "impact": [
     {
-     "claim": "Any company can sign up for its own agent team: OAuth, verified email, rate limits and onboarding (~27k lines, 104 files).",
+     "claim": "Any company can sign up for its own agent team: OAuth, verified email, rate limits and onboarding, ~27k lines changed.",
      "evidence": [
       "E43"
      ]
@@ -3088,9 +3097,15 @@
   }
  ],
  "cta": {
-  "line": "Steer an LLM with two neurons, put an AI agent to work in Revit, or take this page apart. Read the code.",
+  "line": "Shipping AI that has to work in production? Start with the code.",
   "githubUrl": "https://github.com/IstiqlalBhat",
   "links": [
+   {
+    "label": "portfolio2",
+    "url": "https://github.com/IstiqlalBhat/portfolio2",
+    "description": "The source of this page.",
+    "evidence": []
+   },
    {
     "label": "evil-llm",
     "url": "https://github.com/IstiqlalBhat/evil-llm",
@@ -3106,12 +3121,6 @@
     "evidence": [
      "E60"
     ]
-   },
-   {
-    "label": "portfolio2",
-    "url": "https://github.com/IstiqlalBhat/portfolio2",
-    "description": "The source of this page.",
-    "evidence": []
    }
   ]
  }

@@ -37,4 +37,5 @@ export default defineConfig({
   plugins: [storyHtml(), preloadFont()],
   json: { stringify: true },
   build: { target: 'es2020', reportCompressedSize: true, chunkSizeWarningLimit: 800 },
+  worker: { format: 'es' },
 });

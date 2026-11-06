@@ -3,8 +3,10 @@ export async function start({ canvas, cues, fleet, layout, formation }) {
   const g = canvas.getContext('2d');
   if (!g) return { setCue() {}, highlight() {} };
   const sprites = new Map();
-  const sprite = (r, gr, b) => {
-    const key = `${(r * 15) | 0},${(gr * 15) | 0},${(b * 15) | 0}`;
+  // dim drones (the backdrop skyline, stacked many deep on one spot here, without perspective) get a
+  // sprite without the white core, so a stack keeps its colour instead of piling up to white
+  const sprite = (r, gr, b, soft) => {
+    const key = `${(r * 15) | 0},${(gr * 15) | 0},${(b * 15) | 0}${soft ? 's' : ''}`;
     let s = sprites.get(key);
     if (!s) {
       s = document.createElement('canvas');
@@ -12,7 +14,7 @@ export async function start({ canvas, cues, fleet, layout, formation }) {
       const c = s.getContext('2d');
       const grd = c.createRadialGradient(16, 16, 0, 16, 16, 16);
       const rgb = `${(r * 255) | 0},${(gr * 255) | 0},${(b * 255) | 0}`;
-      grd.addColorStop(0, 'rgba(255,255,255,1)');
+      grd.addColorStop(0, soft ? `rgba(${rgb},1)` : 'rgba(255,255,255,1)');
       grd.addColorStop(0.18, `rgba(${rgb},1)`);
       grd.addColorStop(0.45, `rgba(${rgb},0.28)`);
       grd.addColorStop(1, `rgba(${rgb},0)`);
@@ -32,20 +34,23 @@ export async function start({ canvas, cues, fleet, layout, formation }) {
     g.fillStyle = '#cfd8ff';
     for (const [x, y, a] of stars) { g.globalAlpha = a * 0.7; g.fillRect(x * L.w, y * hzY * 0.92, 1.2, 1.2); }
     const f = formation(cues[cue], fleet, L, false);
-    const size = L.spacing * 3.2;
+    const size = L.spacing * 3.2 * (f.zoom || 1);
+    // reflections fade with depth below the horizon (as in the WebGL show): no upside-down words near the bottom
+    const [f0, f1] = L.mobile ? [0.07, 0.2] : [0.1, 0.26];
+    const fade = (yy) => { const t = Math.min(1, Math.max(0, ((yy - hzY) / L.h - f0) / (f1 - f0))); return 1 - t * t * (3 - 2 * t); };
     L.upp = L.upp || 0;
     g.globalCompositeOperation = 'lighter';
     for (let i = 0; i < fleet.n; i++) {
       let l = f.lum[i];
       if (highlight != null) l = fleet.repo[i] === highlight ? Math.min(1, l * 2.4) : l * 0.3;
       if (l < 0.02) continue;
-      const s = sprite(f.col[i * 3], f.col[i * 3 + 1], f.col[i * 3 + 2]);
+      const s = sprite(f.col[i * 3], f.col[i * 3 + 1], f.col[i * 3 + 2], l < 0.35);
       const x = f.pos[i * 3], y = f.pos[i * 3 + 1];
       const r = size * (0.6 + 0.4 * l);
       g.globalAlpha = Math.min(1, l);
       g.drawImage(s, x - r / 2, y - r / 2, r, r);
-      g.globalAlpha = Math.min(1, l) * 0.28;
-      g.drawImage(s, x - r * 0.35, 2 * hzY - y - r, r * 0.7, r * 2);
+      const ry = 2 * hzY - y, ra = Math.min(1, l) * 0.28 * fade(ry);
+      if (ra > 0.004) { g.globalAlpha = ra; g.drawImage(s, x - r * 0.35, ry - r, r * 0.7, r * 2); }
     }
     g.globalCompositeOperation = 'source-over';
     g.globalAlpha = 1;

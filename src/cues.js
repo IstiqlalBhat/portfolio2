@@ -64,6 +64,13 @@ export function buildCues(story) {
   return cues;
 }
 
+/**
+ * How much closer the camera flies for a chapter of n commits (1 = the base distance). Small chapters
+ * are framed tighter: their emblem is laid out with proportionally wider spacing on screen, and the
+ * drones' glows (sized in the world) grow with the zoom, so a hundred drones read as densely as a thousand.
+ */
+export const chapterZoom = (n) => Math.max(1.15, Math.min(2.6, Math.sqrt(650 / Math.max(1, n))));
+
 export function layout(w, h) {
   const mobile = w < 760;
   const hz = mobile ? 0.585 : 0.76;
@@ -75,17 +82,26 @@ export function layout(w, h) {
   const side = mobile
     ? { x: pad, y: top, w: w - pad * 2, h: h * 0.32 }
     : { x: w * 0.44, y: top, w: w * 0.52, h: h * 0.49 };
+  // the backdrop skyline stands on the water line (its y is the base)
   const sky = { x: mobile ? pad : w * 0.03, y: h * hz, w: mobile ? w - pad * 2 : w * 0.94, h: h * (mobile ? 0.12 : 0.2) };
   // on phones the panels fade out above this line so the formation keeps the top of the screen
   const stage = mobile ? Math.round(side.y + side.h + h * 0.02) : 0;
-  return { w, h, mobile, hz, wide, side, sky, stage, spacing: mobile ? 2.3 : 4, upp: 0 };
+  // the record as a bar chart, clear of the reading panel: phones use the stage above the panel,
+  // wide screens the space right of it, standing on the water (y + h is the base line)
+  const chart = mobile
+    ? { x: pad, y: top + h * 0.015, w: w - pad * 2, h: stage - 60 - (top + h * 0.015) }
+    : { x: w * 0.42, y: h * 0.16, w: w * 0.55, h: h * hz - h * 0.16 - 2 };
+  // closing words: on phones a shorter band, so the close-up drone fits between them and the panel
+  const cta = mobile ? { x: pad, y: top, w: w - pad * 2, h: h * 0.19 } : side;
+  return { w, h, mobile, hz, wide, side, sky, chart, cta, stage, spacing: mobile ? 2.3 : 4, upp: 0 };
 }
 
 // ---------- masks ----------
 
 let maskCanvas;
 function ctx2d(w, h) {
-  maskCanvas = maskCanvas || document.createElement('canvas');
+  // in the show's worker there is no document: masks are drawn on an OffscreenCanvas
+  maskCanvas = maskCanvas || (typeof document !== 'undefined' ? document.createElement('canvas') : new OffscreenCanvas(1, 1));
   maskCanvas.width = Math.max(1, Math.ceil(w));
   maskCanvas.height = Math.max(1, Math.ceil(h));
   const g = maskCanvas.getContext('2d', { willReadFrequently: true });
@@ -105,7 +121,8 @@ function setFont(g, px) {
 
 /** Greedy wrap into k lines; choose the k that gives the largest type. */
 function fitText(g, text, w, h, maxLines = 5) {
-  const words = text.split(/\s+/).filter(Boolean);
+  // wrap at ordinary spaces only: a no-break space in the story keeps its words on one line
+  const words = text.split(/[ \t\r\n]+/).filter(Boolean);
   setFont(g, 100);
   const width = (s) => g.measureText(s).width;
   let best = null;
@@ -138,14 +155,14 @@ function textMask(text, rect, maxLines) {
 }
 
 const ICONS = {
-  // blocks on a chain
+  // blocks on a chain: solid blocks read even with a few dozen drones
   'carbon-ledger'(g, s) {
-    g.lineWidth = s * 0.07;
-    const b = s * 0.24;
+    const b = s * 0.22, step = s * 0.36;
+    g.lineWidth = s * 0.06;
     for (let i = -1; i <= 1; i++) {
-      const cx = i * s * 0.36, cy = i * -s * 0.02;
-      g.strokeRect(cx - b / 2, cy - b / 2, b, b);
-      if (i < 1) { g.beginPath(); g.moveTo(cx + b / 2, cy); g.lineTo(cx + s * 0.36 - b / 2, cy - s * 0.02); g.stroke(); }
+      const cx = i * step, cy = i * -s * 0.03;
+      g.fillRect(cx - b / 2, cy - b / 2, b, b);
+      if (i < 1) { g.beginPath(); g.moveTo(cx + b / 2, cy); g.lineTo(cx + step - b / 2, cy - s * 0.03); g.stroke(); }
     }
   },
   // crescent and stars
@@ -345,24 +362,47 @@ function sample(g, n, seed) {
   return out;
 }
 
-/** Skyline: every commit stacked by week, sitting on the water line. */
-function skyline(fleet, L, out, ids) {
+/**
+ * Skyline / bar chart: every commit stacked in its week's column, standing on `base` (CSS px).
+ * Within a week the drones stack by chapter, so each bar shows its chapters as colour bands.
+ * With `maxH` the depth of the stack is chosen so the busiest week just fits (heights stay
+ * proportional to commits); otherwise a fixed depth. Drones stacked behind each other share one
+ * spot on screen and their glows add up, so each one's brightness is divided by that depth
+ * (written to `lum` as l0 / sqrt(depth)): dense weeks stay coloured instead of washing out white.
+ */
+function bars(fleet, L, out, ids, x0, w, base, maxH, lum, l0) {
   const weeks = Math.ceil((fleet.span + 1) / 7);
-  const R = L.sky;
-  const colW = R.w / weeks;
-  const kx = Math.max(1, Math.floor(colW / L.spacing));
-  const kz = L.mobile ? 8 : 4;
-  const sx = colW / kx;
-  const fill = new Int32Array(weeks);
-  for (const i of ids) {
-    const wk = Math.min(weeks - 1, Math.floor(fleet.day[i] / 7));
-    const k = fill[wk]++;
-    const layer = Math.floor(k / (kx * kz));
-    const inLayer = k % (kx * kz);
-    out[i * 3] = R.x + wk * colW + (inLayer % kx + 0.5) * sx;
-    out[i * 3 + 1] = R.y - 2 - layer * L.spacing * 0.9;
-    out[i * 3 + 2] = -Math.floor(inLayer / kx) * 0.35;
+  const colW = w / weeks;
+  // the chart draws each week as a bar with a small gap; the backdrop packs whole columns
+  const bw = maxH ? colW * 0.84 : colW;
+  const kx = Math.max(1, maxH ? Math.round(bw / (L.spacing * 0.8)) : Math.floor(bw / L.spacing));
+  const sx = bw / kx, gap = (colW - bw) / 2;
+  let ly = L.spacing * 0.9;
+  const byWeek = Array.from({ length: weeks }, () => []);
+  for (const i of ids) byWeek[Math.min(weeks - 1, Math.floor(fleet.day[i] / 7))].push(i);
+  let most = 1;
+  for (const b of byWeek) most = Math.max(most, b.length);
+  // the backdrop is deep and low (it must stay under the emblems when a camera flies in close)
+  const kz = maxH ? Math.max(1, Math.ceil(most / (kx * Math.max(1, Math.floor(maxH / ly))))) : (L.mobile ? 16 : 8);
+  const per = kx * kz;
+  // the chart's busiest week reaches the top exactly (layer spacing stretches to fit)
+  if (maxH) ly = Math.min(L.spacing * 1.6, maxH / Math.ceil(most / per));
+  for (let wk = 0; wk < weeks; wk++) {
+    const b = byWeek[wk];
+    if (!b.length) continue;
+    b.sort((p, q) => fleet.chap[p] - fleet.chap[q] || fleet.day[p] - fleet.day[q] || p - q);
+    for (let k = 0; k < b.length; k++) {
+      const i = b[k], layer = Math.floor(k / per), inLayer = k % per;
+      out[i * 3] = x0 + wk * colW + gap + (inLayer % kx + 0.5) * sx;
+      out[i * 3 + 1] = base - 2 - layer * ly;
+      out[i * 3 + 2] = -Math.floor(inLayer / kx) * 0.35;
+      if (lum) {
+        const here = Math.min(per, b.length - layer * per);
+        lum[i] = l0 / Math.sqrt(Math.max(1, Math.ceil(here / kx)));
+      }
+    }
   }
+  return { weeks, colW, kz };
 }
 
 function makeAnim(ids, update) {
@@ -375,9 +415,10 @@ function makeAnim(ids, update) {
  * Finale: the agent platform as an orrery. A control-plane ring at the hub, spokes carrying
  * pulses outward, and six agent teams orbiting it, each spinning. Exactly ids.length drones.
  */
-function finale(ids, rect, L, boost) {
+function finale(ids, rect, L, boost, zoom = 1) {
   const n = ids.length, K = 6;
-  const sp = L.mobile ? 8.5 : 13.5;
+  // spacing in the world stays that of a dense formation; the closer camera (zoom) makes it fill the frame
+  const sp = (L.mobile ? 5.6 : 8.6) * zoom;
   let nh = Math.max(6, Math.round(n * 0.22));
   const ns = Math.max(1, Math.floor((n * 0.3) / K));
   const nw = Math.max(1, Math.floor((n - nh - ns * K) / K));
@@ -509,6 +550,8 @@ function packFleet(fleet, R, target) {
 export function formation(c, fleet, L, alt = false) {
   const n = fleet.n;
   const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), lum = new Float32Array(n);
+  // back[i] = 1: the drone rests in the backdrop skyline, which stays put in the world while the camera moves
+  let back = null, zoom = 1;
   const all = Array.from({ length: n }, (_, i) => i);
   const paint = (i, rgb, l) => { col[i * 3] = rgb[0]; col[i * 3 + 1] = rgb[1]; col[i * 3 + 2] = rgb[2]; lum[i] = l; };
   const place = (ids, pts, rect) => ids.forEach((i, k) => {
@@ -522,7 +565,7 @@ export function formation(c, fleet, L, alt = false) {
   let anim = null;
 
   if (c.kind === 'text') {
-    const rect = c.id === 'hero' ? L.wide : L.side;
+    const rect = c.id === 'hero' ? L.wide : c.id === 'cta' ? L.cta : L.side;
     const pts = sample(textMask(alt && c.alt ? c.alt : c.text, rect, c.lines || 5), n, 7);
     place(all, pts, rect);
     const chrono = alt || c.tone === 'chrono';
@@ -531,22 +574,27 @@ export function formation(c, fleet, L, alt = false) {
       else { const v = 0.94 + 0.06 * Math.sin(i * 12.9898); paint(i, [WARM[0] * v, WARM[1] * v, WARM[2] * v], 1); }
     }
   } else if (c.kind === 'skyline') {
-    skyline(fleet, L, pos, all);
-    for (const i of all) paint(i, fleet.colors[fleet.chap[i]], 0.85);
+    const R = L.chart;
+    for (const i of all) paint(i, fleet.colors[fleet.chap[i]], 1);
+    bars(fleet, L, pos, all, R.x, R.w, R.y + R.h, R.h, lum, L.mobile ? 1.3 : 1.2);
   } else if (c.kind === 'chapter') {
     const lit = [], rest = [];
     for (const i of all) (fleet.chap[i] === c.chapter ? lit : rest).push(i);
-    skyline(fleet, L, pos, rest);
-    for (const i of rest) paint(i, fleet.colors[fleet.chap[i]], 0.22);
+    for (const i of rest) paint(i, fleet.colors[fleet.chap[i]], 0);
+    bars(fleet, L, pos, rest, L.sky.x, L.sky.w, L.sky.y, 0, lum, 0.42);
+    back = new Uint8Array(n);
+    for (const i of rest) back[i] = 1;
     const rgb = fleet.colors[c.chapter];
-    // small chapters fly tighter and brighter: constant spacing between drones, boosted glow
-    const boost = Math.max(1, Math.min(1.5, 1 + 0.5 * (1 - lit.length / 650)));
+    // small chapters are framed closer (see chapterZoom) and glow brighter
+    const small = Math.max(0, Math.min(1, 1 - lit.length / 650));
+    const boost = 1 + 0.6 * small;
+    zoom = chapterZoom(lit.length);
     for (const i of lit) paint(i, rgb, boost);
     const rect = L.side;
     if (c.finale) {
-      anim = finale(lit, rect, L, boost);
+      anim = finale(lit, rect, L, boost, zoom);
     } else if (lit.length) {
-      const target = L.mobile ? 4.8 : 6.8;
+      const target = (L.mobile ? 4.8 : 6.8) * zoom;
       const sMax = Math.min(rect.w, rect.h * 1.25);
       const s = Math.max(sMax * 0.56, Math.min(sMax, target * Math.sqrt(lit.length / iconFill(c.id))));
       const pts = sample(iconMask(c.id, rect, s), lit.length, 11 + c.chapter);
@@ -591,5 +639,5 @@ export function formation(c, fleet, L, alt = false) {
     });
     settle(anim);
   }
-  return { pos, col, lum, anim };
+  return { pos, col, lum, anim, back, zoom };
 }

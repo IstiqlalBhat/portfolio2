@@ -1,2 +1,5 @@
 User-agent: *
 Allow: /
+# archived design-tournament previews (also marked noindex): keep them out of search results
+Disallow: /designs/
+Disallow: /portfolio2/designs/
