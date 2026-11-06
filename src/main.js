@@ -1,11 +1,10 @@
 import './style.css';
-import { chapters, repos, timeline, person, cta, headline } from './data/story.json';
+import story from './data/story.json';
 import { buildCues, buildFleet, layout, formation } from './cues.js';
 
-const story = { chapters, repos, timeline, person, cta, headline };
 document.body.classList.remove('no-js');
 const params = new URLSearchParams(location.search);
-const canvas = document.getElementById('sky');
+let canvas = document.getElementById('sky');
 const cues = buildCues(story);
 const fleet = buildFleet(story);
 const sections = cues.map((c) => document.getElementById('cue-' + c.id));
@@ -16,21 +15,22 @@ const chapterTitle = new Map(story.chapters.map((c) => [c.id, c.title]));
 let engine = null;
 let active = -1;
 
-/** 'none' (no WebGL2), 'soft' (software rasteriser: SwiftShader, llvmpipe…) or 'gpu'. */
-function gpuTier() {
+/**
+ * Opens the show's WebGL2 context on the real canvas (three.js reuses it) and classifies the GPU:
+ * 'soft' for software rasterisers (SwiftShader, llvmpipe…), else 'gpu'; 'none' without WebGL2.
+ */
+function openGL(cv) {
   try {
-    const c = document.createElement('canvas');
-    const gl = c.getContext('webgl2');
-    if (!gl) return 'none';
+    const small = matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+    const gl = cv.getContext('webgl2', { alpha: true, antialias: !small, depth: true, stencil: false, premultipliedAlpha: true, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+    if (!gl) return { tier: 'none', gl: null };
     const ext = gl.getExtension('WEBGL_debug_renderer_info');
     const r = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '');
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
-    return /swiftshader|llvmpipe|softpipe|software|basic render|lavapipe/i.test(r) ? 'soft' : 'gpu';
-  } catch { return 'none'; }
+    return { tier: /swiftshader|llvmpipe|softpipe|software|basic render|lavapipe/i.test(r) ? 'soft' : 'gpu', gl };
+  } catch { return { tier: 'none', gl: null }; }
 }
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const tier = reduce || params.has('flat') ? 'none' : gpuTier();
-const show3d = tier !== 'none';
+const show3d = !reduce && !params.has('flat') && typeof WebGL2RenderingContext !== 'undefined';
 // the header waits for the take-off; it comes back at the end of the intro (or on the first scroll)
 if (show3d) document.body.classList.add('intro');
 const endIntro = () => document.body.classList.remove('intro');
@@ -53,7 +53,7 @@ function setActive(i) {
 let L = layout(innerWidth, innerHeight);
 let barBottom = 0;
 const measureBar = () => { barBottom = (document.querySelector('.bar')?.getBoundingClientRect().bottom || 0) + 6; };
-measureBar();
+requestAnimationFrame(measureBar);
 function fade() {
   const top = L.mobile ? Math.max(L.stage, barBottom) : barBottom;
   const rects = panels.map((p) => (p ? p.getBoundingClientRect() : null));
@@ -76,7 +76,7 @@ function pick() {
 }
 addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(pick); } }, { passive: true });
 addEventListener('resize', () => { L = layout(innerWidth, innerHeight); measureBar(); pick(); }, { passive: true });
-pick();
+requestAnimationFrame(pick);
 
 // fleet: what is this squadron?
 function hideTip() { tip.hidden = true; engine?.highlight(null); }
@@ -117,11 +117,16 @@ async function boot() {
   const mod = show3d ? import('./swarm.js') : null;
   const glb = show3d ? fetch(new URL('./assets/drone.glb', document.baseURI)).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null) : null;
   await Promise.race([document.fonts.load('900 100px Archivo'), new Promise((r) => setTimeout(r, 1500))]).catch(() => {});
-  const ctx = { canvas, cues, fleet, layout, formation, params, tier, glb, onIntroEnd: endIntro };
-  if (mod) {
-    try { engine = await (await mod).start(ctx); } catch (e) { console.warn('WebGL show failed, using 2D', e); }
+  const { tier, gl } = mod ? openGL(canvas) : { tier: 'none', gl: null };
+  const ctx = { canvas, cues, fleet, layout, formation, params, tier, gl, glb, onIntroEnd: endIntro };
+  if (mod && gl) {
+    try { engine = await (await mod).start(ctx); document.body.classList.add('show3d'); } catch (e) { console.warn('WebGL show failed, using 2D', e); }
   }
-  if (!engine) { endIntro(); engine = await (await import('./flat.js')).start(ctx); }
+  if (!engine) {
+    endIntro();
+    if (gl) { const c = canvas.cloneNode(false); canvas.replaceWith(c); canvas = c; } // a canvas holds one context type
+    engine = await (await import('./flat.js')).start({ ...ctx, canvas });
+  }
   const i = active; active = -1; setActive(i);
 }
 // first paint is the static page; the show loads right after

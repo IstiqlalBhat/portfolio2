@@ -31,7 +31,7 @@ const HOVER = /* glsl */`sin(uTime * 1.3 + seed * 6.2832) * 0.02`;
 const DRONE_VS = /* glsl */`
 attribute float part;
 attribute vec3 iPos; attribute vec3 iVel; attribute vec3 iCol; attribute float iLum; attribute float seed;
-uniform float uTime, uScale;
+uniform float uTime, uScale, uYaw;
 varying vec3 vN, vC, vView; varying float vPart;
 vec3 rot(vec3 p, vec3 ax, float a) { float c = cos(a), s = sin(a); return p * c + cross(ax, p) * s + ax * dot(ax, p) * (1.0 - c); }
 void main() {
@@ -42,6 +42,11 @@ void main() {
     float c = cos(a), s = sin(a);
     vec2 d = p.xz - hub;
     p.xz = hub + vec2(c * d.x - s * d.y, s * d.x + c * d.y);
+  }
+  if (uYaw != 0.0) {
+    float cy = cos(uYaw), sy = sin(uYaw);
+    p.xz = vec2(cy * p.x - sy * p.z, sy * p.x + cy * p.z);
+    n.xz = vec2(cy * n.x - sy * n.z, sy * n.x + cy * n.z);
   }
   vec3 v = vec3(iVel.x, 0.0, iVel.z);
   float sp = length(v);
@@ -185,10 +190,12 @@ async function loadDrone(glb) {
   return geo;
 }
 
-export async function start({ canvas, cues, fleet, layout, formation, params, tier = 'gpu', glb, onIntroEnd }) {
+const yieldTask = () => new Promise((r) => setTimeout(r, 0)); // keeps boot work in short tasks
+
+export async function start({ canvas, cues, fleet, layout, formation, params, tier = 'gpu', gl: context = null, glb, onIntroEnd }) {
   const soft = tier === 'soft' || params.has('soft');
   const lite = soft || matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
-  const renderer = new WebGLRenderer({ canvas, antialias: !lite, alpha: true, powerPreference: 'high-performance' });
+  const renderer = new WebGLRenderer(context ? { canvas, context } : { canvas, antialias: !lite, alpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
   let dpr = Math.min(window.devicePixelRatio || 1, soft ? 1 : 1.5);
   renderer.setPixelRatio(dpr);
@@ -261,20 +268,72 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     scene.add(stars);
   }
 
+  await yieldTask();
   // drone meshes (instanced; the show starts on glows if the glTF is late)
   let drones = null;
-  const meshCap = Math.min(N, cols * (soft ? 4 : 12));
-  const iPos = dyn(new InstancedBufferAttribute(pos, 3)), iVel = dyn(new InstancedBufferAttribute(vel, 3));
-  const iCol = dyn(new InstancedBufferAttribute(col, 3)), iLum = dyn(new InstancedBufferAttribute(lum, 1));
-  const droneU = { uTime: glowU.uTime, uScale: { value: DRONE }, uMoon: { value: new Vector3() }, uDown: { value: new Vector3() } };
+  // GPUs draw the first rows straight from the shared state; software GL (where every instance is
+  // expensive) draws only a window of the nearest drones, copied into small buffers each frame
+  const meshRows = params.has('rows') ? +params.get('rows') : soft ? 4 : 12;
+  let meshIdx = null;
+  if (soft) {
+    const half = 8, mid = (cols - 1) / 2, list = [];
+    for (let r = 0; r < meshRows; r++) for (let c = Math.max(0, Math.ceil(mid - half)); c <= Math.min(cols - 1, Math.floor(mid + half)); c++) if (r * cols + c < N) list.push(r * cols + c);
+    meshIdx = Int32Array.from(list);
+  }
+  const meshCap = meshIdx ? meshIdx.length : Math.min(N, cols * meshRows);
+  const sub = (a, k) => (meshIdx ? new Float32Array(meshIdx.length * k) : a);
+  const iPos = dyn(new InstancedBufferAttribute(sub(pos, 3), 3)), iVel = dyn(new InstancedBufferAttribute(sub(vel, 3), 3));
+  const iCol = dyn(new InstancedBufferAttribute(sub(col, 3), 3)), iLum = dyn(new InstancedBufferAttribute(sub(lum, 1), 1));
+  const iSeed = new InstancedBufferAttribute(meshIdx ? Float32Array.from(meshIdx, (i) => seed[i]) : seed, 1);
+  function copyMesh() {
+    if (!meshIdx) return;
+    const P = iPos.array, V = iVel.array, C = iCol.array, U = iLum.array;
+    for (let k = 0; k < meshIdx.length; k++) {
+      const i = meshIdx[k];
+      for (let c = 0; c < 3; c++) { P[k * 3 + c] = pos[i * 3 + c]; V[k * 3 + c] = vel[i * 3 + c]; C[k * 3 + c] = col[i * 3 + c]; }
+      U[k] = lum[i];
+    }
+  }
+  const droneU = { uTime: glowU.uTime, uScale: { value: DRONE }, uYaw: { value: 0 }, uMoon: { value: new Vector3() }, uDown: { value: new Vector3() } };
+  // close-up: at the closing cue the drone carrying the newest commit flies to the camera and shows
+  // the model (still the same drone, so the sky keeps exactly one per commit)
+  const H = N - 1;
+  let near = null, nearGlow = null, closing = false;
+  const nPos = dyn(new InstancedBufferAttribute(new Float32Array(3), 3)), nVel = dyn(new InstancedBufferAttribute(new Float32Array(3), 3));
+  const nCol = dyn(new InstancedBufferAttribute(new Float32Array(3), 3)), nLum = new InstancedBufferAttribute(new Float32Array([1]), 1);
+  const nSeed = new InstancedBufferAttribute(new Float32Array([seed[H]]), 1);
+  const nearU = { ...droneU, uYaw: { value: 0 } };
+  {
+    const g = new BufferGeometry();
+    g.setAttribute('position', dyn(new BufferAttribute(nPos.array, 3)));
+    g.setAttribute('iCol', dyn(new BufferAttribute(nCol.array, 3)));
+    g.setAttribute('iLum', new BufferAttribute(new Float32Array([0.9]), 1));
+    g.setAttribute('iVel', new BufferAttribute(new Float32Array(3), 3));
+    g.setAttribute('seed', new BufferAttribute(nSeed.array, 1));
+    nearGlow = new Points(g, new ShaderMaterial({
+      vertexShader: GLOW_VS, fragmentShader: GLOW_FS, transparent: true, depthWrite: false, depthTest: false, blending: AdditiveBlending, premultipliedAlpha: true,
+      uniforms: { ...glowU, uBase: { value: 0.024 }, uMinPx: { value: 0 }, uTrail: { value: 0 }, uMirror: { value: 0 }, uGain: { value: 1 } },
+    }));
+    nearGlow.frustumCulled = false; nearGlow.visible = false; nearGlow.renderOrder = 5;
+    scene.add(nearGlow);
+  }
   const loaded = loadDrone(glb).then((geo) => {
     geo.setAttribute('iPos', iPos); geo.setAttribute('iVel', iVel); geo.setAttribute('iCol', iCol); geo.setAttribute('iLum', iLum);
-    geo.setAttribute('seed', new InstancedBufferAttribute(seed, 1));
+    geo.setAttribute('seed', iSeed);
     geo.instanceCount = meshCap;
     drones = new Mesh(geo, new ShaderMaterial({ vertexShader: DRONE_VS, fragmentShader: DRONE_FS, side: DoubleSide, uniforms: droneU }));
     drones.frustumCulled = false;
     drones.renderOrder = 1;
     scene.add(drones);
+    const g2 = new InstancedBufferGeometry();
+    for (const a of ['position', 'normal', 'part']) g2.setAttribute(a, geo.getAttribute(a));
+    g2.setIndex(geo.getIndex());
+    g2.setAttribute('iPos', nPos); g2.setAttribute('iVel', nVel); g2.setAttribute('iCol', nCol); g2.setAttribute('iLum', nLum); g2.setAttribute('seed', nSeed);
+    g2.instanceCount = 1;
+    // drawn after the glows (transparent queue) so its body hides the formation behind it
+    near = new Mesh(g2, new ShaderMaterial({ vertexShader: DRONE_VS, fragmentShader: DRONE_FS, side: DoubleSide, transparent: true, uniforms: nearU }));
+    near.frustumCulled = false; near.visible = false; near.renderOrder = 4;
+    scene.add(near);
   }).catch(() => {});
 
   // ---- layout / formations ----
@@ -418,7 +477,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     }
     const pr = L.mobile ? 2.6 : 3.4;
     const colK = Math.min(1, dt * 2.5);
-    let busy = flocking || ptrOn || !!anim || opening;
+    let busy = flocking || ptrOn || !!anim || opening || closing;
 
     for (let i = 0; i < N; i++) {
       const i3 = i * 3;
@@ -525,6 +584,8 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     // hero alternates name and hook
     if (cues[cueI].alt && now > formedAt + (alt ? HOLD : HOLD + 1.8) && now > introEnd) { alt = !alt; retarget(true); }
 
+    closing = cues[cueI].id === 'cta' && !opening;
+    if (closing) { closeUp(now); idle = false; }
     if (!idle) {
       applyAnim(now);
       // at most two sub-steps: a slow frame plays in slow motion instead of snowballing
@@ -557,7 +618,24 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
         droneU.uMoon.value.set(-0.45, 0.8, 0.4).normalize().transformDirection(camera.matrixWorldInverse);
         droneU.uDown.value.set(0, -1, 0).transformDirection(camera.matrixWorldInverse);
         droneU.uScale.value = DRONE * (1 + k * 0.4);
+        copyMesh();
         iPos.needsUpdate = true; iVel.needsUpdate = true; iCol.needsUpdate = true; iLum.needsUpdate = true;
+      }
+    }
+    if (near) {
+      const h3 = H * 3;
+      const dist = Math.hypot(pos[h3] - camera.position.x, pos[h3 + 1] - camera.position.y, pos[h3 + 2] - camera.position.z);
+      near.visible = nearGlow.visible = dist < 10;
+      if (near.visible) {
+        nPos.array.set(pos.subarray(h3, h3 + 3)); nCol.array.set(col.subarray(h3, h3 + 3));
+        nVel.array[0] = Math.sin(now * 0.7) * 3 + vel[h3]; nVel.array[1] = 0; nVel.array[2] = Math.cos(now * 0.5) * 2 + vel[h3 + 2];
+        nearU.uYaw.value = now * 0.35;
+        nPos.needsUpdate = nVel.needsUpdate = nCol.needsUpdate = true;
+        nearGlow.geometry.attributes.position.needsUpdate = nearGlow.geometry.attributes.iCol.needsUpdate = true;
+        if (!drones.visible) {
+          droneU.uMoon.value.set(-0.45, 0.8, 0.4).normalize().transformDirection(camera.matrixWorldInverse);
+          droneU.uDown.value.set(0, -1, 0).transformDirection(camera.matrixWorldInverse);
+        }
       }
     }
     renderer.render(scene, camera);
@@ -568,6 +646,19 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
       if (dt > 1 / 40) slow++;
       if (frames === 240 && slow > 120) { dpr = 1; renderer.setPixelRatio(1); glowU.uDpr.value = 1; resize(); }
     }
+  }
+
+  // the close-up spot rides with the camera (it drifts), just above the horizon and clear of the text
+  const ce = camera.matrixWorld.elements;
+  function closeUp(now) {
+    const d = L.mobile ? 1.3 : 0.95, ax = L.mobile ? 0.02 : 0.58, ay = L.mobile ? 0.17 : -0.4;
+    const th = Math.tan((FOV / 2) * Math.PI / 180), asp = camera.aspect;
+    const bob = Math.sin(now * 1.1) * 0.012, sway = Math.sin(now * 0.6) * 0.02;
+    const h3 = H * 3;
+    for (let c = 0; c < 3; c++) tgt[h3 + c] = camera.position.getComponent(c) + d * (-ce[8 + c] + ax * th * asp * ce[c] + ay * th * ce[4 + c]) + (c === 0 ? sway : c === 1 ? bob : 0);
+    const dist = Math.hypot(pos[h3] - camera.position.x, pos[h3 + 1] - camera.position.y, pos[h3 + 2] - camera.position.z);
+    lumT[H] = Math.min(1, Math.max(0, (dist - 3) / 8));
+    animated[H] = 1;
   }
 
   // precompute every formation in idle time, nearest cues first, so a cue change is a copy
@@ -587,10 +678,13 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     ric(tick);
   }
 
+  await yieldTask();
   resize();
   addEventListener('resize', () => { resize(); if (introDone) warm(); });
   retarget(true);
+  await yieldTask();
   renderer.compile(scene, camera);
+  await yieldTask();
   t0 = performance.now();
   last = 0;
   cueStart = FIRST; // first formation assembles after the takeoff climb

@@ -165,11 +165,31 @@ h2 { font-size: clamp(1.45rem, 6vw, 2.15rem); }
 .stack li { font-size: 0.8125rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); }
 
 .legend-chapters { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
-.legend-chapters li { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9375rem; padding-left: 1rem; position: relative; }
+.legend-chapters li { display: grid; grid-template-columns: 1fr auto; gap: 0.1rem 1rem; font-size: 0.9375rem; padding-left: 1rem; position: relative; }
 .legend-chapters li::before { content: ''; position: absolute; left: 0; top: 0.5em; width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
-.legend-chapters span { color: var(--ink-3); font-size: 0.8125rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.legend-chapters .lc-p { color: var(--ink-3); font-size: 0.8125rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.legend-chapters .lc-s { display: none; grid-column: 1 / -1; color: var(--ink-3); font-size: 0.8125rem; line-height: 1.45; }
 
 .hint { margin: 0.8rem 0 0; font-size: 0.875rem; color: var(--led); }
+.lead { margin: 1.1rem 0 0; font-size: 0.9375rem; color: var(--ink-3); }
+.lead + .claims { margin-top: 0.6rem; }
+/* a chapter's longer story waits behind "More" so the panel fits one phone screen */
+.more { margin-top: 1rem; }
+.more summary {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer; list-style: none;
+  font-size: 0.875rem; font-weight: 600; color: var(--ink-2); padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+}
+.more summary::-webkit-details-marker { display: none; }
+.more summary::after { content: '+'; font-weight: 700; color: var(--c, var(--led)); }
+.more[open] summary::after { content: '\2212'; }
+.more summary:hover { color: var(--ink); }
+.more .story { margin-top: 0.8rem; }
+.links { list-style: none; margin: 1.1rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.links li { display: grid; gap: 0.1rem; padding-left: 1rem; position: relative; }
+.links li::before { content: ''; position: absolute; left: 0; top: 0.55em; width: 7px; height: 7px; border-radius: 50%; background: var(--led); box-shadow: 0 0 6px var(--led); }
+.links a { font-weight: 700; font-stretch: 112%; color: var(--led); text-decoration: underline; text-decoration-color: rgba(255, 233, 199, 0.35); }
+.links a:hover { text-decoration-color: currentColor; }
+.links span { font-size: 0.875rem; color: var(--ink-2); }
 .roster { margin-top: 1rem; }
 .roster summary { cursor: pointer; font-weight: 600; padding: 8px 0; }
 .roster ol { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.6rem; max-height: 50svh; overflow: auto; overscroll-behavior: contain; padding-right: 6px; }
@@ -185,6 +205,8 @@ h2 { font-size: clamp(1.45rem, 6vw, 2.15rem); }
   box-shadow: 0 0 24px rgba(255, 233, 199, 0.35);
 }
 .cta:hover { box-shadow: 0 0 36px rgba(255, 233, 199, 0.55); }
+.closeup-note { display: none; margin: 0.9rem 0 0; font-size: 0.8125rem; color: var(--ink-3); }
+body.show3d .closeup-note { display: block; }
 .skills-h { margin: 1.4rem 0 0; font-size: 0.875rem; color: var(--ink-3); }
 .skills { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; font-size: 0.9375rem; }
 .credits { margin: 1.4rem 0 0; font-size: 0.8125rem; color: var(--ink-3); }
@@ -215,6 +237,7 @@ h2 { font-size: clamp(1.45rem, 6vw, 2.15rem); }
   .sub { font-size: 1.0625rem; }
   .cues { left: auto; right: var(--gutter); width: min(30rem, 40vw); top: 14px; }
   .bar { padding-top: 16px; padding-bottom: 10px; }
+  .legend-chapters .lc-s { display: block; }
   .bar .gh { margin-right: calc(min(30rem, 40vw) + 1.25rem); }
 }
 @media (min-width: 760px) and (max-height: 760px) {

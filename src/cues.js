@@ -523,7 +523,7 @@ export function formation(c, fleet, L, alt = false) {
 
   if (c.kind === 'text') {
     const rect = c.id === 'hero' ? L.wide : L.side;
-    const pts = sample(textMask(alt && c.alt ? c.alt : c.text, rect, L.mobile && c.lines ? c.lines : 5), n, 7);
+    const pts = sample(textMask(alt && c.alt ? c.alt : c.text, rect, c.lines || 5), n, 7);
     place(all, pts, rect);
     const chrono = alt || c.tone === 'chrono';
     for (const i of all) {

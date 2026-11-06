@@ -91,7 +91,7 @@
 <header class="note-h"><span class="code">B1</span><h3>A Voice That Remembers</h3><p class="when">Mar – May 2026</p></header>
 <p class="dek">First production role: a voice-first AI assistant with long-term memory.</p>
 <p>The first production product: a voice assistant that remembers, moved from GPT-4o Realtime to Gemini Live and given pgvector recall, multimodal memory and an LLM-maintained wiki. Then the unglamorous half that makes it real: on-device iOS speech, a cold-start microphone fix, production errors traced through server logs.</p>
-<ul class="impact"><li>Snappier voice replies: audio flush threshold cut from ~1.5s to ~0.3s by moving real-time voice from GPT-4o Realtime to Gemini Live.</li><li>An assistant that remembers what it heard and saw: pgvector recall over past sessions plus joint image + text embeddings.</li><li>Conversations become a living knowledge base: sessions compiled into interlinked wiki pages by an async two-model pipeline, searched with hybrid wiki + vector retrieval.</li></ul>
+<ul class="impact"><li>Snappier voice replies: audio flush threshold cut from ~1.5s to ~0.3s with the move to Gemini Live.</li><li>An assistant that remembers what it heard and saw: pgvector recall over past sessions plus joint image + text embeddings.</li><li>Conversations become a living knowledge base: sessions compiled into interlinked wiki pages by an async two-model pipeline, searched with hybrid wiki + vector retrieval.</li></ul>
 <dl class="metrics"><div><dd>65K+</dd><dt>lines added</dt></div><div><dd>51</dd><dt>PRs merged</dt></div><div><dd>689</dd><dt>commits</dt></div></dl>
 
 <p class="stack"><span>Played on</span> Flutter, Dart, Django, Gemini Live, pgvector, Swift, Firebase Auth</p>

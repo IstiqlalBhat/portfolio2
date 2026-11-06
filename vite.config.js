@@ -34,5 +34,6 @@ function preloadShow() {
 export default defineConfig({
   base: './',
   plugins: [storyHtml(), preloadShow()],
+  json: { stringify: true },
   build: { target: 'es2020', reportCompressedSize: true, chunkSizeWarningLimit: 800 },
 });
