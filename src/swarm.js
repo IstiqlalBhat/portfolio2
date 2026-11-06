@@ -19,8 +19,8 @@ const FLOCK = 0.55;      // seconds of free flocking between formations
 const RAMP = 1.0;        // seconds for a drone to blend from flocking into formation
 const SPREAD = 0.45;     // per-drone random delay before it blends in
 const HOLD = 5.2;        // hero: seconds a formation holds before the swarm re-forms
-const CAM0 = 0.55;       // intro: camera starts to rise
-const FIRST = 1.0;       // intro: the first formation starts pulling
+const CAM0 = 0.45;       // intro: camera starts to rise
+const FIRST = 0.8;       // intro: the first formation starts pulling
 
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
@@ -74,7 +74,7 @@ void main() {
 // glows: one point per drone; a moving drone draws a light streak behind it (long-exposure look)
 const GLOW_VS = /* glsl */`
 attribute vec3 iCol; attribute float iLum; attribute vec3 iVel; attribute float seed;
-uniform float uBase, uMinPx, uPxPerUnit, uMirror, uTime, uDpr, uMaxPt, uTrail;
+uniform float uBase, uMinPx, uPxPerUnit, uMirror, uTime, uDpr, uMaxPt, uTrail, uSweepT, uSweepW;
 uniform vec2 uView;
 varying vec3 vC; varying float vA, vR, vS; varying vec2 vT;
 void main() {
@@ -86,6 +86,12 @@ void main() {
   float size = max(uBase * (0.6 + 0.4 * iLum), uMinPx * depth / uPxPerUnit);
   float px = size * uPxPerUnit / depth;
   vA = iLum; vC = iCol;
+  // a formation locks in with a shimmer: a band of light sweeps across it once
+  float sw = (uTime - uSweepT) / 1.1;
+  if (sw > 0.0 && sw < 1.0 && iLum > 0.5) {
+    float e = (position.x - mix(-uSweepW, uSweepW, sw)) / (uSweepW * 0.14);
+    vA *= 1.0 + 0.9 * exp(-e * e);
+  }
   vec2 T = vec2(0.0);
   float S = px;
   if (uMirror > 0.5) {
@@ -223,7 +229,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   for (let i = 0; i < N; i++) {
     const r = Math.floor(i / cols), c = i % cols;
     pos[i * 3] = (c - (cols - 1) / 2) * PAD_STEP; pos[i * 3 + 1] = 0.05; pos[i * 3 + 2] = padZ0 + ((rows - 1) / 2 - r) * PAD_STEP;
-    launch[i] = 0.3 + (1 - r / Math.max(1, rows - 1)) * 0.95 + Math.random() * 0.15;
+    launch[i] = 0.25 + (1 - r / Math.max(1, rows - 1)) * 0.8 + Math.random() * 0.15;
     omega[i] = 2.6 + Math.random() * 1.1;
     seed[i] = Math.random();
     col[i * 3] = 1; col[i * 3 + 1] = 0.9; col[i * 3 + 2] = 0.75; lum[i] = 0.7;
@@ -241,6 +247,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   const glowU = {
     uBase: { value: 0.1 }, uMinPx: { value: 2.6 }, uPxPerUnit: { value: 1 }, uTime: { value: 0 }, uDpr: { value: dpr },
     uMaxPt: { value: maxPt }, uTrail: { value: 0 }, uView: { value: [innerWidth, innerHeight] },
+    uSweepT: { value: -100 }, uSweepW: { value: 40 },
   };
   const mkGlow = (mirror, gain) => new Points(pts, new ShaderMaterial({
     vertexShader: GLOW_VS, fragmentShader: GLOW_FS, transparent: true, depthWrite: false, depthTest: false, blending: AdditiveBlending, premultipliedAlpha: true,
@@ -273,10 +280,10 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   let drones = null;
   // GPUs draw the first rows straight from the shared state; software GL (where every instance is
   // expensive) draws only a window of the nearest drones, copied into small buffers each frame
-  const meshRows = params.has('rows') ? +params.get('rows') : soft ? 4 : 12;
+  const meshRows = params.has('rows') ? +params.get('rows') : soft ? 3 : 12;
   let meshIdx = null;
   if (soft) {
-    const half = 8, mid = (cols - 1) / 2, list = [];
+    const half = 5, mid = (cols - 1) / 2, list = [];
     for (let r = 0; r < meshRows; r++) for (let c = Math.max(0, Math.ceil(mid - half)); c <= Math.min(cols - 1, Math.floor(mid + half)); c++) if (r * cols + c < N) list.push(r * cols + c);
     meshIdx = Int32Array.from(list);
   }
@@ -302,7 +309,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   const nPos = dyn(new InstancedBufferAttribute(new Float32Array(3), 3)), nVel = dyn(new InstancedBufferAttribute(new Float32Array(3), 3));
   const nCol = dyn(new InstancedBufferAttribute(new Float32Array(3), 3)), nLum = new InstancedBufferAttribute(new Float32Array([1]), 1);
   const nSeed = new InstancedBufferAttribute(new Float32Array([seed[H]]), 1);
-  const nearU = { ...droneU, uYaw: { value: 0 } };
+  const nearU = { ...droneU, uYaw: { value: 0 }, uScale: { value: DRONE * 1.25 } };
   {
     const g = new BufferGeometry();
     g.setAttribute('position', dyn(new BufferAttribute(nPos.array, 3)));
@@ -411,7 +418,8 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
       nbOk.fill(2); // stale neighbour sums are dropped; each half refreshes on its next turn
     }
     formedAt = flock ? now + FLOCK + RAMP + SPREAD + 0.2 : now;
-    trail = cues[cueI].finale ? 0.32 : 0.06;
+    glowU.uSweepT.value = flock ? formedAt - 0.25 : -100;
+    trail = cues[cueI].finale ? 0.32 : cues[cueI].kind === 'fleet' ? 0.16 : 0.06;
     idle = false;
   }
   function resize() {
@@ -424,6 +432,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     placeShowCam();
     glowU.uPxPerUnit.value = h / (2 * Math.tan((FOV / 2) * Math.PI / 180));
     glowU.uView.value = [w, h];
+    glowU.uSweepW.value = (w * unitsPerPx) / 2;
     cache.clear();
     retarget(false);
   }
@@ -446,7 +455,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   let t0 = performance.now();
   const clock = () => (performance.now() - t0) / 1000;
   let opening = params.has('still') ? 0 : 1; // 1 while the camera is still flying the intro
-  let introEnd = params.has('still') ? 0 : 3.5;
+  let introEnd = params.has('still') ? 0 : 3.2;
   let introDone = false;
   const macro = params.has('macro'); // ?macro holds the opening close-up (for inspecting the model)
   if (macro) launch.fill(1e9);
@@ -466,7 +475,12 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     }
     // flock goal = centre of the next formation, wandering a little (kept low during the take-off)
     let gx = goalX + Math.sin(now * 0.9) * (opening ? 3 : 6), gy = goalY + Math.cos(now * 0.7) * 2, gz = goalZ + Math.sin(now * 0.5) * 4;
-    if (opening) gy = Math.min(gy, goalY - 1.5);
+    if (opening) {
+      // take-off: the swarm sweeps out low over the water, then rises into place, always in frame
+      const s = smooth((now - 0.4) / 1.9);
+      gy = 1.2 + (goalY - 2 - 1.2) * s;
+      gz = padZ0 - 6 + (goalZ - padZ0 + 6) * s;
+    }
 
     // the pointer scatters the swarm, except on the fleet where it inspects squadrons
     const ptrOn = now - pointer.t < 1.4 && now > introEnd && cues[cueI].kind !== 'fleet';
@@ -477,7 +491,10 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     }
     const pr = L.mobile ? 2.6 : 3.4;
     const colK = Math.min(1, dt * 2.5);
-    let busy = flocking || ptrOn || !!anim || opening || closing;
+    // drones at rest are skipped unless something global moves everyone (an animated formation
+    // only keeps its own drones busy)
+    const hold = flocking || ptrOn || opening;
+    let busy = hold || !!anim || closing;
 
     for (let i = 0; i < N; i++) {
       const i3 = i * 3;
@@ -501,7 +518,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
       // boids while not in formation
       const f = 1 - w;
       if (f > 0.01) {
-        if (sinceLaunch < 0.6) ay += 26 * f; // climb off the pad
+        if (sinceLaunch < 0.6) ay += (opening ? 11 : 26) * f; // climb off the pad
         const o9 = i * 9;
         if ((i & 1) === parity || !nbOk[i]) {
           let sx = 0, sy = 0, sz = 0, axv = 0, ayv = 0, azv = 0, cx = 0, cy = 0, cz = 0, cnt = 0;
@@ -540,7 +557,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
         bx += (vx / sp) * cruise; by += (vy / sp) * cruise; bz += (vz / sp) * cruise;
         if (py < 1.2) by += (1.2 - py) * 6;
         ax += bx * f; ay += by * f; az += bz * f;
-      } else if (!busy) {
+      } else if (!hold && !animated[i]) {
         // in formation and nothing is pulling: snap the last fraction of a pixel and rest
         const ex = tgt[i3] - px, ey = tgt[i3 + 1] - py, ez = tgt[i3 + 2] - pz;
         if (ex * ex + ey * ey + ez * ez < 4e-4 && vx * vx + vy * vy + vz * vz < 4e-3) {
@@ -555,11 +572,12 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
         const dx = px - P.x, dy = py - P.y, d = Math.hypot(dx, dy) + 1e-4;
         if (d < pr) { const s = (1 - d / pr); const k = s * s * 160 / d; ax += dx * k; ay += dy * k; az -= s * 20; }
       }
-      // clamp acceleration, integrate
-      const am = Math.hypot(ax, ay, az), AM = 90;
+      // clamp acceleration, integrate (the close-up drone may fly faster: it crosses the whole scene)
+      const fast = closing && i === H;
+      const am = Math.hypot(ax, ay, az), AM = fast ? 160 : 90;
       if (am > AM) { ax *= AM / am; ay *= AM / am; az *= AM / am; }
       vx += ax * dt; vy += ay * dt; vz += az * dt;
-      const sp = Math.hypot(vx, vy, vz), VM = 34;
+      const sp = Math.hypot(vx, vy, vz), VM = fast ? 75 : 34;
       if (sp > VM) { vx *= VM / sp; vy *= VM / sp; vz *= VM / sp; }
       pos[i3] = px + vx * dt; pos[i3 + 1] = Math.max(0.05, py + vy * dt); pos[i3 + 2] = pz + vz * dt;
       vel[i3] = vx; vel[i3 + 1] = vy; vel[i3 + 2] = vz;
@@ -573,7 +591,11 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   function frame() {
     requestAnimationFrame(frame);
     const now = clock();
-    // frame budget: software GL and settled formations run at 30 fps
+    // hero alternates name and hook
+    if (cues[cueI].alt && now > formedAt + (alt ? HOLD : HOLD + 1.8) && now > introEnd) { alt = !alt; retarget(true); }
+    // frame budget: software GL and settled formations run at 30 fps; on software GL a settled
+    // formation is not redrawn at all (the drift pauses) so the page goes quiet
+    if (soft && idle && lastDraw > 0 && now - pointer.t > 1.4) return;
     const cap = soft || idle ? 1 / 30 : 0;
     if (cap && now - lastDraw < cap - 0.004) return;
     lastDraw = now;
@@ -581,15 +603,12 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     last = now;
     glowU.uTime.value = now;
 
-    // hero alternates name and hook
-    if (cues[cueI].alt && now > formedAt + (alt ? HOLD : HOLD + 1.8) && now > introEnd) { alt = !alt; retarget(true); }
-
     closing = cues[cueI].id === 'cta' && !opening;
     if (closing) { closeUp(now); idle = false; }
     if (!idle) {
       applyAnim(now);
       // at most two sub-steps: a slow frame plays in slow motion instead of snowballing
-      const sub = dt > 1 / 45 ? 2 : 1;
+      const sub = dt > 1 / 20 ? 2 : 1;
       let busy = false;
       for (let s = 0; s < sub; s++) busy = step(dt / sub, now) || busy;
       if (!busy) idle = true;
@@ -613,7 +632,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     const show = unitsPerPx * L.spacing * (L.mobile ? 2.35 : 2.7);
     glowU.uBase.value = 0.045 + (show - 0.045) * k;
     if (drones) {
-      drones.visible = k < 0.6;
+      drones.visible = k < (soft ? 0.45 : 0.6);
       if (drones.visible) {
         droneU.uMoon.value.set(-0.45, 0.8, 0.4).normalize().transformDirection(camera.matrixWorldInverse);
         droneU.uDown.value.set(0, -1, 0).transformDirection(camera.matrixWorldInverse);
@@ -651,7 +670,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   // the close-up spot rides with the camera (it drifts), just above the horizon and clear of the text
   const ce = camera.matrixWorld.elements;
   function closeUp(now) {
-    const d = L.mobile ? 1.3 : 0.95, ax = L.mobile ? 0.02 : 0.58, ay = L.mobile ? 0.17 : -0.4;
+    const d = L.mobile ? 1.3 : 0.8, ax = L.mobile ? 0.02 : 0.58, ay = L.mobile ? 0.24 : -0.38;
     const th = Math.tan((FOV / 2) * Math.PI / 180), asp = camera.aspect;
     const bob = Math.sin(now * 1.1) * 0.012, sway = Math.sin(now * 0.6) * 0.02;
     const h3 = H * 3;
@@ -659,6 +678,7 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
     const dist = Math.hypot(pos[h3] - camera.position.x, pos[h3 + 1] - camera.position.y, pos[h3 + 2] - camera.position.z);
     lumT[H] = Math.min(1, Math.max(0, (dist - 3) / 8));
     animated[H] = 1;
+    delay[H] = -FLOCK - RAMP; // no flocking: it heads straight for the camera
   }
 
   // precompute every formation in idle time, nearest cues first, so a cue change is a copy
@@ -690,8 +710,10 @@ export async function start({ canvas, cues, fleet, layout, formation, params, ti
   cueStart = FIRST; // first formation assembles after the takeoff climb
   if (params.has('still')) { cueStart = -10; for (let i = 0; i < N; i++) { launch[i] = -10; pos.set([tgt[i * 3], tgt[i * 3 + 1], tgt[i * 3 + 2]], i * 3); col.set(colT.subarray(i * 3, i * 3 + 3), i * 3); lum[i] = lumT[i]; } }
   formedAt = cueStart + FLOCK + RAMP + SPREAD + 0.2;
+  glowU.uSweepT.value = params.has('still') ? -100 : formedAt - 0.25;
   requestAnimationFrame(frame);
 
+  if (params.has('debug')) window.__swarm = { pos, tgt, vel, camera, H, L: () => L };
   return {
     setCue(i) {
       if (i === cueI) return;

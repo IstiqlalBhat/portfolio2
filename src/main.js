@@ -113,10 +113,12 @@ addEventListener('pointerdown', (e) => {
 }, { passive: true });
 
 async function boot() {
-  // the show's code and the drone model download while the display font settles
-  const mod = show3d ? import('./swarm.js') : null;
-  const glb = show3d ? fetch(new URL('./assets/drone.glb', document.baseURI)).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null) : null;
-  await Promise.race([document.fonts.load('900 100px Archivo'), new Promise((r) => setTimeout(r, 1500))]).catch(() => {});
+  // the display font (preloaded) comes first: the page and the drones' lettering use it; the show's
+  // code and the drone model follow right behind it (on a slow link they finish no later)
+  const font = Promise.race([document.fonts.load('900 100px Archivo'), new Promise((r) => setTimeout(r, 1500))]).catch(() => {});
+  const mod = show3d ? font.then(() => import('./swarm.js')) : null;
+  const glb = show3d ? font.then(() => fetch(new URL('./assets/drone.glb', document.baseURI))).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null) : null;
+  await font;
   const { tier, gl } = mod ? openGL(canvas) : { tier: 'none', gl: null };
   const ctx = { canvas, cues, fleet, layout, formation, params, tier, gl, glb, onIntroEnd: endIntro };
   if (mod && gl) {

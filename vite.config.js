@@ -16,16 +16,17 @@ function storyHtml() {
   };
 }
 
-// The show chunk (three.js) starts downloading with the page instead of after boot.
-function preloadShow() {
+// The display font starts downloading with the page: the first paint uses it and the swarm draws
+// the name with it. (The show chunk is requested as soon as the font is in, see src/main.js.)
+function preloadFont() {
   return {
-    name: 'preload-show',
+    name: 'preload-font',
     apply: 'build',
     transformIndexHtml: {
       order: 'post',
       handler(html, ctx) {
-        const chunk = Object.values(ctx.bundle || {}).find((c) => c.type === 'chunk' && /[\\/]src[\\/]swarm\.js$/.test(c.facadeModuleId || ''));
-        return chunk ? html.replace('</head>', `<link rel="modulepreload" crossorigin href="./${chunk.fileName}">\n</head>`) : html;
+        const font = Object.values(ctx.bundle || {}).find((c) => c.type === 'asset' && /\.woff2$/.test(c.fileName));
+        return font ? html.replace('</head>', `<link rel="preload" as="font" type="font/woff2" crossorigin href="./${font.fileName}">\n</head>`) : html;
       },
     },
   };
@@ -33,7 +34,7 @@ function preloadShow() {
 
 export default defineConfig({
   base: './',
-  plugins: [storyHtml(), preloadShow()],
+  plugins: [storyHtml(), preloadFont()],
   json: { stringify: true },
   build: { target: 'es2020', reportCompressedSize: true, chunkSizeWarningLimit: 800 },
 });

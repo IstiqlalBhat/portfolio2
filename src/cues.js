@@ -53,7 +53,7 @@ export function buildCues(story) {
   const chapters = story.chapters.slice().sort((a, b) => a.index - b.index);
   const cues = [
     { id: 'hero', label: 'Name', kind: 'text', text: story.person.name.toUpperCase(), alt: hookB ? hookA : null, tone: 'warm' },
-    { id: 'merged', label: 'Merged', kind: 'text', text: merged, tone: 'warm' },
+    { id: 'merged', label: 'Merged', kind: 'text', text: merged, tone: 'warm', lines: 3 },
     { id: 'record', label: 'Record', kind: 'skyline' },
   ];
   chapters.forEach((c, i) => {

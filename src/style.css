@@ -135,6 +135,7 @@ h1 .role { font-size: 0.85rem; font-weight: 600; font-stretch: 100%; color: var(
 
 h2 { font-size: clamp(1.45rem, 6vw, 2.15rem); }
 .cue-chapter h2 { display: flex; gap: 0.6rem; align-items: baseline; }
+.cue-cta h2 { font-size: clamp(1.3rem, 5.4vw, 1.75rem); line-height: 1.15; }
 .cue-chapter h2::before {
   content: ''; flex: none; width: 0.5em; height: 0.5em; border-radius: 50%;
   background: var(--c); box-shadow: 0 0 10px 2px color-mix(in srgb, var(--c) 70%, transparent);
@@ -159,6 +160,8 @@ h2 { font-size: clamp(1.45rem, 6vw, 2.15rem); }
 .nums dd { margin: 0; font-size: 1.6rem; font-weight: 800; font-stretch: 118%; line-height: 1; font-variant-numeric: tabular-nums; color: var(--c, var(--led)); }
 .nums dt { font-size: 0.8125rem; color: var(--ink-3); }
 .nums.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem 0.6rem; }
+.nums.n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 420px) { .nums.n4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.9rem 0.6rem; } .nums.n4 dd { font-size: clamp(1.15rem, 5vw, 1.5rem); } }
 .nums.n3 dd { font-size: clamp(1.2rem, 5.6vw, 1.6rem); }
 
 .stack { list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
