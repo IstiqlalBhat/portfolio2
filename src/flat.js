@@ -33,6 +33,7 @@ export async function start({ canvas, cues, fleet, layout, formation }) {
     for (const [x, y, a] of stars) { g.globalAlpha = a * 0.7; g.fillRect(x * L.w, y * hzY * 0.92, 1.2, 1.2); }
     const f = formation(cues[cue], fleet, L, false);
     const size = L.spacing * 3.2;
+    L.upp = L.upp || 0;
     g.globalCompositeOperation = 'lighter';
     for (let i = 0; i < fleet.n; i++) {
       let l = f.lum[i];
@@ -41,9 +42,9 @@ export async function start({ canvas, cues, fleet, layout, formation }) {
       const s = sprite(f.col[i * 3], f.col[i * 3 + 1], f.col[i * 3 + 2]);
       const x = f.pos[i * 3], y = f.pos[i * 3 + 1];
       const r = size * (0.6 + 0.4 * l);
-      g.globalAlpha = l;
+      g.globalAlpha = Math.min(1, l);
       g.drawImage(s, x - r / 2, y - r / 2, r, r);
-      g.globalAlpha = l * 0.28;
+      g.globalAlpha = Math.min(1, l) * 0.28;
       g.drawImage(s, x - r * 0.35, 2 * hzY - y - r, r * 0.7, r * 2);
     }
     g.globalCompositeOperation = 'source-over';

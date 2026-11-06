@@ -11,7 +11,7 @@ const period = (p) => (fmtYM(p?.start) === fmtYM(p?.end) ? fmtYM(p?.start) : `${
 const num = (n) => Number(n).toLocaleString('en-US');
 
 const claims = (list) => `<ul class="claims">${(list || []).map((c) => `<li>${esc(c.claim)}</li>`).join('')}</ul>`;
-const nums = (list) => `<dl class="nums">${(list || []).map((m) => `<div><dt>${esc(m.label)}</dt><dd>${esc(m.value)}</dd></div>`).join('')}</dl>`;
+const nums = (list) => `<dl class="nums n${(list || []).length}">${(list || []).map((m) => `<div><dt>${esc(m.label)}</dt><dd>${esc(m.value)}</dd></div>`).join('')}</dl>`;
 
 export function renderHead(story) {
   const p = story.person;
@@ -102,7 +102,7 @@ ${nav}
   <section class="cue" id="cue-fleet" data-cue="fleet">
     <div class="panel">
       <h2>${num(systems)} systems, one squadron each</h2>
-      <p class="story">Each squadron is one repository from the record, sized by its commits and coloured by its chapter. ${num(publicCount)} are public and linked; the rest are private work, described without names.</p>
+      <p class="story">Each squadron is one repository from the record, sized by its commits and grouped and coloured by its chapter. ${num(publicCount)} are public and linked; the rest are private work, described without names.</p>
       <p class="hint" id="fleet-hint">Tap or hover a squadron to see what it is.</p>
       <details class="roster"><summary>List all ${num(systems)} systems</summary><ol>${rosterItems}</ol></details>
     </div>

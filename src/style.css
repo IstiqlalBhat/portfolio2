@@ -60,13 +60,18 @@ html { scrollbar-color: #36447f transparent; scrollbar-width: thin; }
 }
 .skip:focus { left: var(--gutter); }
 
-/* header + running order */
+/* header + running order: a solid-to-clear band so scrolled text never prints through */
 .bar {
   position: fixed; z-index: 20; left: 0; right: 0; top: 0;
   display: flex; justify-content: space-between; align-items: center;
-  padding: 30px var(--gutter) 8px;
+  padding: 26px var(--gutter) 6px;
   font-size: 0.875rem; font-stretch: 112%; font-weight: 600; letter-spacing: 0.01em;
   pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+.bar::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; bottom: -22px; z-index: -1; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(4, 10, 42, 0.96), rgba(4, 10, 42, 0.9) calc(100% - 30px), rgba(4, 10, 42, 0));
 }
 .bar a { pointer-events: auto; text-decoration: none; color: var(--ink-2); padding: 6px 0; }
 .bar a:hover { color: var(--ink); }
@@ -74,7 +79,10 @@ html { scrollbar-color: #36447f transparent; scrollbar-width: thin; }
 body[data-cue="hero"] .bar .mark { opacity: 0; }
 .bar .gh { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: rgba(5, 10, 38, 0.5); }
 
-.cues { position: fixed; z-index: 21; left: var(--gutter); right: var(--gutter); top: 0; }
+.cues { position: fixed; z-index: 21; left: var(--gutter); right: var(--gutter); top: 0; transition: opacity 0.7s ease; }
+/* during the take-off the sky has the screen; the header fades in when the name has formed */
+body.intro .bar, body.intro .cues { opacity: 0; }
+body.intro .bar a, body.intro .cues a { pointer-events: none; }
 .cues ol { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; }
 .cues li { flex: 1; }
 .cues a { display: block; padding: 9px 0 12px; }
@@ -104,6 +112,11 @@ main { position: relative; z-index: 10; }
   box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
 }
 .cue-hero .panel { background: linear-gradient(to bottom, rgba(5, 10, 38, 0.55), var(--panel) 5rem); }
+/* panels dissolve as they scroll under the header (and, on phones, above the formation's stage) */
+.panel.fading {
+  -webkit-mask-image: linear-gradient(to bottom, transparent var(--cut), #000 calc(var(--cut) + 56px));
+  mask-image: linear-gradient(to bottom, transparent var(--cut), #000 calc(var(--cut) + 56px));
+}
 
 h1, h2 { margin: 0; font-stretch: 125%; font-weight: 800; line-height: 1.08; letter-spacing: -0.01em; text-wrap: balance; }
 h1 { font-size: 1.05rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.6rem; }
@@ -145,6 +158,8 @@ h2 { font-size: clamp(1.45rem, 6vw, 2.15rem); }
 .nums div { display: flex; flex-direction: column-reverse; gap: 0.1rem; }
 .nums dd { margin: 0; font-size: 1.6rem; font-weight: 800; font-stretch: 118%; line-height: 1; font-variant-numeric: tabular-nums; color: var(--c, var(--led)); }
 .nums dt { font-size: 0.8125rem; color: var(--ink-3); }
+.nums.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem 0.6rem; }
+.nums.n3 dd { font-size: clamp(1.2rem, 5.6vw, 1.6rem); }
 
 .stack { list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .stack li { font-size: 0.8125rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); }
@@ -187,14 +202,19 @@ h2 { font-size: clamp(1.45rem, 6vw, 2.15rem); }
   :root { --hz: 76%; --gutter: 5vw; }
   .cue { display: flex; align-items: center; padding: 14vh var(--gutter) 30vh; }
   .cue-hero { align-items: flex-end; padding-top: 55vh; padding-bottom: 8vh; }
-  .cue-hero .panel { max-width: 46rem; background: transparent; border-color: transparent; box-shadow: none; padding: 0; }
+  .cue-hero .panel { max-width: 46rem; background: transparent; border-color: transparent; box-shadow: none; padding: 0; position: relative; isolation: isolate; }
+  /* a soft scrim keeps the hook legible while the swarm climbs behind it */
+  .cue-hero .panel::before {
+    content: ''; position: absolute; z-index: -1; inset: -14% -18% -16% -12%; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(4, 10, 42, 0.78), rgba(4, 10, 42, 0.5) 55%, rgba(4, 10, 42, 0));
+  }
   .panel { width: min(30rem, 36vw); padding: 26px 26px 28px; }
   .cue-hero .panel { width: auto; }
   h1, h1 .name { font-size: 1.25rem; }
   .hook { font-size: clamp(1.6rem, 2.6vw, 2.5rem); max-width: 30ch; }
   .sub { font-size: 1.0625rem; }
   .cues { left: auto; right: var(--gutter); width: min(30rem, 40vw); top: 14px; }
-  .bar { padding-top: 16px; }
+  .bar { padding-top: 16px; padding-bottom: 10px; }
   .bar .gh { margin-right: calc(min(30rem, 40vw) + 1.25rem); }
 }
 @media (min-width: 760px) and (max-height: 760px) {

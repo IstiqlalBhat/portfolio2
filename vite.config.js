@@ -16,8 +16,23 @@ function storyHtml() {
   };
 }
 
+// The show chunk (three.js) starts downloading with the page instead of after boot.
+function preloadShow() {
+  return {
+    name: 'preload-show',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html, ctx) {
+        const chunk = Object.values(ctx.bundle || {}).find((c) => c.type === 'chunk' && /[\\/]src[\\/]swarm\.js$/.test(c.facadeModuleId || ''));
+        return chunk ? html.replace('</head>', `<link rel="modulepreload" crossorigin href="./${chunk.fileName}">\n</head>`) : html;
+      },
+    },
+  };
+}
+
 export default defineConfig({
   base: './',
-  plugins: [storyHtml()],
+  plugins: [storyHtml(), preloadShow()],
   build: { target: 'es2020', reportCompressedSize: true, chunkSizeWarningLimit: 800 },
 });
