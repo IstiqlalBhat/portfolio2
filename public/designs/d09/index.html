@@ -87,8 +87,8 @@
     <svg class="arrow" viewBox="0 0 40 48" aria-hidden="true"><path d="M20 2 36 20H26v26H14V20H4z" fill="currentColor"/></svg>
   </header>
   <div class="dash">
-    <p class="lead">After a silent summer, the commit graph lights up with self-directed AI builds.</p>
-    <p class="narr">Nobody assigned any of this: a Graph-RAG chatbot over a raw email archive, an LLM parser for purchase-order emails, an IoT rig with live anomaly detection. It was practice, and exactly the toolkit the next chapter needed.</p>
+    <p class="lead">After a silent summer, the commit graph lights up with hands-on AI builds.</p>
+    <p class="narr">A Graph-RAG chatbot over a raw email archive, an LLM parser for purchase-order emails, an IoT rig with live anomaly detection: exactly the toolkit the next chapter needed.</p>
     <dl class="gauges"><div><dd>477</dd><dt>commits</dt></div><div><dd>17</dd><dt>repositories</dt></div></dl>
     
     <h3>What shipped</h3>
@@ -180,7 +180,7 @@
     <p class="lead">A multi-tenant platform where every workspace gets its own team of AI agents.</p>
     <p class="narr">A multi-tenant platform that provisions a private team of AI agents for every workspace on Kubernetes: control plane, rosters, skill allowlists, owner-approved tasks. The hard parts were distributed-systems parts, from fencing stale queue messages to hot-adding agents without a gateway restart.</p>
     <dl class="gauges"><div><dd>116</dd><dt>PRs merged</dt></div><div><dd>129K+</dd><dt>lines added</dt></div><div><dd>128</dd><dt>commits</dt></div></dl>
-    <p class="note">PRs here are squash-merged into one commit each, so the commit count understates the work.</p>
+    <p class="note">Most PRs here were squash-merged into a single commit, so the commit count understates the work.</p>
     <h3>What shipped</h3>
     <ul class="shipped"><li>Any company can sign up and get its own agent team: a registration control plane with OAuth, verified email, rate limits and onboarding (~27k lines, 104 files).</li><li>Stale queue messages can no longer touch a replacement workspace: provisioning fenced with instance and operation IDs, terminal failures no longer retried forever — backed by 394 tests, 110 of them lifecycle cases.</li><li>A fix merged upstream into an open-source agent runtime: managed coding-CLI runtime bump and regenerated protocol schemas.</li></ul>
     <div class="landmarks"><h3>Landmark towers</h3><ul><li><span class="priv"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="currentColor" d="M4 7V5a4 4 0 1 1 8 0v2h1v8H3V7zm2 0h4V5a2 2 0 1 0-4 0z"/></svg>multi-tenant agent platform</span><span class="lm-meta">Per-workspace AI agent teams on Kubernetes, with a web control plane. 98 commits.</span></li><li><a href="https://github.com/IstiqlalBhat/evil-llm" rel="noopener" target="_blank">evil-llm</a><span class="lm-meta">An open LLM steered by pushing two neurons, with a live 3D map of the effect. 6 commits.</span></li><li><a href="https://github.com/IstiqlalBhat/revit-agentic" rel="noopener" target="_blank">revit-agentic</a><span class="lm-meta">An AI agent for Autodesk Revit. 1 commit.</span></li></ul></div>

@@ -2691,9 +2691,9 @@
     "start": "2025-10",
     "end": "2026-04"
    },
-   "kicker": "After a silent summer, the commit graph lights up with self-directed AI builds.",
+   "kicker": "After a silent summer, the commit graph lights up with hands-on AI builds.",
    "summary": "Graph-RAG over an email archive, an LLM parser for purchase orders, live anomaly detection on an IoT rig.",
-   "narrative": "Nobody assigned any of this: a Graph-RAG chatbot over a raw email archive, an LLM parser for purchase-order emails, an IoT rig with live anomaly detection. It was practice, and exactly the toolkit the next chapter needed.",
+   "narrative": "A Graph-RAG chatbot over a raw email archive, an LLM parser for purchase-order emails, an IoT rig with live anomaly detection: exactly the toolkit the next chapter needed.",
    "impact": [
     {
      "claim": "Questions answered over a raw email archive: hybrid retrieval plus a GPU-accelerated Graph-RAG notebook.",
@@ -3016,7 +3016,7 @@
      "label": "commits"
     }
    ],
-   "metricsNote": "PRs here are squash-merged into one commit each, so the commit count understates the work.",
+   "metricsNote": "Most PRs here were squash-merged into a single commit, so the commit count understates the work.",
    "stack": [
     "Kubernetes",
     "Helm",
